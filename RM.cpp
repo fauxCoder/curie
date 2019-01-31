@@ -2,12 +2,12 @@
 
 #include <SDL2/SDL_image.h>
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+uint32_t RM::s_ScreenWidth = 640;
+uint32_t RM::s_ScreenHeight = 480;
 
 SDL_Window* RM::Create()
 {
-    SDL_Window* window = SDL_CreateWindow("Curie", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN /*SDL_WINDOW_FULLSCREEN*/);
+    SDL_Window* window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN /*SDL_WINDOW_FULLSCREEN*/);
     assert(window);
 
     SDL_ShowCursor(SDL_DISABLE);

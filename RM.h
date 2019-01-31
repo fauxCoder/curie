@@ -48,6 +48,9 @@ struct End
 
 struct RM
 {
+    static uint32_t s_ScreenWidth;
+    static uint32_t s_ScreenHeight;
+
     static SDL_Window* Create();
 
     static void Destroy(SDL_Window* a_Window);
