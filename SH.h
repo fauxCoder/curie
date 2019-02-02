@@ -48,7 +48,7 @@ struct SH
 
     R Done()
     {
-        return (R)d;
+        return (R)Cut(1.0).d;
     }
 
     uint32_t t;
