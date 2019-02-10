@@ -4,13 +4,13 @@
 
 #include <assert.h>
 
-SDL_AudioDeviceID SB::Open(SB* a_SB)
+SDL_AudioDeviceID SB::Open(SB* a_SB, uint32_t a_Channels)
 {
     SDL_AudioSpec want;
     memset(&want, 0, sizeof(want));
     want.freq = 44100;
     want.format = AUDIO_S16SYS;
-    want.channels = 2;
+    want.channels = a_Channels;
     want.samples = 4096;
     want.callback = &Write;
     want.userdata = static_cast<void*>(a_SB);
@@ -32,30 +32,12 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 
     std::unique_lock<std::mutex> lk(sb->m_WriteMutex);
 
-    bool written = false;
-    for (auto& c : sb->m_Queue)
+    if (sb->m_Queue.size() > 0)
     {
-        if ( ! c.second.empty())
-        {
-            if ( ! written)
-            {
-                memcpy(a_Stream, c.second.front(), a_Length);
-                written = true;
-            }
-            else
-            {
-                // for (uint32_t i = 0; i < m_SamplesPerFrame; ++i)
-                // {
-                //     m_Buffer[i*2] += c.second.front()[i*2];
-                //     m_Buffer[(i*2)+1] += c.second.front()[(i*2)+1];
-                // }
-            }
-
-            c.second.pop_front();
-        }
+        memcpy(a_Stream, sb->m_Queue.front().data(), a_Length);
+        sb->m_Queue.pop_front();
     }
-
-    if ( ! written)
+    else
     {
         memset(a_Stream, sb->m_Have.silence, a_Length);
     }
@@ -70,8 +52,8 @@ void SB::Close(SDL_AudioDeviceID a_Device, std::mutex& a_Mutex)
     SDL_CloseAudioDevice(a_Device);
 }
 
-SB::SB(Quartz& a_Q)
-: m_Device(Open(this))
+SB::SB(Quartz& a_Q, uint32_t a_Channels)
+: m_Device(Open(this, a_Channels))
 {
 }
 
@@ -85,32 +67,22 @@ uint32_t SB::SForF(double a_Frames)
     return a_Frames * ((double)m_Have.freq / (double)Quartz::s_FPS);
 }
 
-void SB::AddSound(uint32_t a_Key, uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, int16_t&, int16_t&)> a_Func)
+void SB::AddSound(uint32_t a_Key, uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t&)> a_Func)
 {
     std::unique_lock<std::mutex> lk(m_WriteMutex);
 
-    uint32_t rounded = ((a_CacheSamples + m_Have.samples) / m_Have.samples) * m_Have.samples;
+    std::vector<working_t> data;
+    data.resize(a_CacheSamples);
 
-    std::vector<int16_t> data;
-    data.resize(rounded * 2);
-
-    for(uint32_t t = 0; t < rounded; ++t)
+    for(uint32_t t = 0; t < a_CacheSamples; ++t)
     {
-        if (t < a_CacheSamples)
-        {
-            a_Func(t, a_CacheSamples, data[t*2], data[(t*2)+1]);
-        }
-        else
-        {
-            data[t*2] = m_Have.silence;
-            data[(t*2)+1] = m_Have.silence;
-        }
+        a_Func(t, a_CacheSamples, data[t]);
     }
 
     m_Sounds[a_Key] = data;
 }
 
-void SB::PlaySound(uint32_t a_Key, uint32_t a_Channel)
+void SB::PlaySound(uint32_t a_Key)
 {
     auto s = m_Sounds.find(a_Key);
 
@@ -118,19 +90,21 @@ void SB::PlaySound(uint32_t a_Key, uint32_t a_Channel)
     {
         std::unique_lock<std::mutex> lk(m_WriteMutex);
 
-        auto c = m_Queue.find(a_Channel);
-        if (c == m_Queue.end())
+        auto last = &m_Queue.emplace_back();
+        last->reserve(m_Have.samples);
+        for (auto& sample : s->second)
         {
-            c = m_Queue.insert({a_Channel, std::deque<int16_t*>()}).first;
-        }
-        else
-        {
-            c->second.clear();
+            if (last->size() >= m_Have.samples)
+            {
+                last = &m_Queue.emplace_back();
+            }
+
+            last->emplace_back(static_cast<output_t>(sample * static_cast<working_t>(std::numeric_limits<output_t>::max())));
         }
 
-        for (int16_t* f = s->second.data(); static_cast<uint32_t>(f - s->second.data()) < s->second.size(); f += (m_Have.samples * m_Have.channels))
+        while (last->size() < m_Have.samples)
         {
-            c->second.push_back(f);
+            last->push_back(m_Have.silence);
         }
     }
 }
