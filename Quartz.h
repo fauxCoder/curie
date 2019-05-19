@@ -14,15 +14,17 @@ struct Quartz
 {
     friend Cog;
 
-    static const uint32_t s_FPS = 25;
+    static const uint32_t s_FPS;
 
-    static const uint32_t s_Frequency = 1000 / s_FPS;
+    static const uint32_t s_Frequency;
 
     Quartz();
 
     ~Quartz();
 
     void Resonate();
+
+    void Tooth();
 
     void Wait(uint32_t a_Moves);
 
@@ -32,8 +34,7 @@ private:
     std::atomic<bool> m_Power;
     std::thread m_Thread;
 
-    bool m_Waiting;
-    bool m_FrameDone;
+    uint32_t m_ToothTokens;
     std::mutex m_Mutex;
     std::condition_variable m_Monitor;
 
