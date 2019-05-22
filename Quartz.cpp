@@ -26,12 +26,17 @@ void Quartz::Resonate()
         uint32_t start = SDL_GetTicks();
 
         {
+            bool power = true;
             std::unique_lock<std::mutex> lk(m_Mutex);
             m_Monitor.wait_for(lk, std::chrono::milliseconds(s_Frequency), [&]{
-                return (m_ToothTokens > 0) || ( ! m_Power.load());
+                return (m_ToothTokens > 0) || ( ! (power = m_Power.load()));
             });
             m_ToothTokens--;
+
+            if ( ! power)
+                break;
         }
+
         m_Monitor.notify_one();
 
         {
@@ -55,7 +60,9 @@ void Quartz::Tooth()
 {
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
-        m_Monitor.wait_for(lk, std::chrono::milliseconds(s_Frequency), [&]{ return m_ToothTokens == 0; });
+        m_Monitor.wait_for(lk, std::chrono::milliseconds(s_Frequency), [&]{
+            return m_ToothTokens == 0;
+        });
         m_ToothTokens++;
     }
 

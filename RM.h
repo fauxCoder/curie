@@ -4,7 +4,8 @@
 
 #include <SDL2/SDL.h>
 
-#include <assert.h>
+#include <cassert>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <set>
@@ -55,29 +56,8 @@ struct RM
 
     static void Destroy(SDL_Window* a_Window);
 
-    template <typename S, typename T>
-    static uint32_t MakeKey(S a_Spice, std::vector<T> a_Values)
-    {
-        uint32_t ret = 0;
-        S* p1 = reinterpret_cast<S*>(&ret);
-
-        memcpy(p1++, &a_Spice, sizeof(S));
-
-        T* p2 = reinterpret_cast<T*>(p1);
-
-        uint32_t i = 0;
-        for (auto& v : a_Values)
-        {
-            assert((sizeof(S) + (sizeof(T) * i)) <= sizeof(ret));
-
-            memcpy(p2++, &v, sizeof(T));
-            i++;
-        }
-
-        return ret;
-    }
-
     RM(Quartz& a_Q, SDL_Window& a_Window);
+
     ~RM();
 
     void AddImage(uint32_t a_Key, std::string a_Image);
