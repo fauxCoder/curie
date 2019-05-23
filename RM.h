@@ -1,11 +1,13 @@
 #pragma once
 
 #include <Curie/Cog.h>
+#include <Curie/Flick.h>
 
 #include <SDL2/SDL.h>
 
 #include <cassert>
 #include <functional>
+#include <list>
 #include <map>
 #include <mutex>
 #include <set>
@@ -19,32 +21,6 @@ struct Image
     SDL_Texture* Texture;
     int32_t W;
     int32_t H;
-};
-
-struct End
-{
-    End(int32_t a_P, void* a_Owner, std::function<void(SDL_Rect&)> a_F)
-    : P(a_P)
-    , Owner(a_Owner)
-    , F(a_F)
-    {
-    }
-
-    bool operator<(const End& rhs) const
-    {
-        if (P < rhs.P)
-        {
-            return true;
-        }
-        else
-        {
-            return Owner < rhs.Owner;
-        }
-    }
-
-    int32_t P;
-    void* Owner;
-    std::function<void(SDL_Rect&)> F;
 };
 
 struct RM
@@ -64,9 +40,9 @@ struct RM
 
     Image* GetImage(uint32_t a_Key);
 
-    End* AddEnd(std::function<void(SDL_Rect&)> a_F, void* a_Owner, int32_t a_P = 0);
+    Flick* AddFlick();
 
-    void RemoveEnd(End* a_End);
+    void RemoveFlick(Flick* a_Flick);
 
     void See();
 
@@ -80,5 +56,5 @@ struct RM
 
     std::mutex m_Mutex;
     std::map<uint32_t, Image> m_Images;
-    std::set<End> m_Purview;
+    std::list<Flick*> m_Flicks;
 };

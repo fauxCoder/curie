@@ -60,17 +60,15 @@ Image* RM::GetImage(uint32_t a_Key)
     }
 }
 
-End* RM::AddEnd(std::function<void(SDL_Rect&)> a_F, void* a_Owner, int32_t a_P)
+Flick* RM::AddFlick()
 {
-    End* e = new End(a_P, a_Owner, a_F);
-    m_Purview.insert(*e);
-    return e;
+    m_Flicks.push_back(new Flick());
+    return m_Flicks.back();
 }
 
-void RM::RemoveEnd(End* a_End)
+void RM::RemoveFlick(Flick* a_Flick)
 {
-    m_Purview.erase(*a_End);
-    delete a_End;
+    m_Flicks.remove(a_Flick);
 }
 
 void RM::See()
@@ -78,14 +76,9 @@ void RM::See()
     SDL_SetRenderDrawColor(m_Renderer, 0x22, 0x22, 0x22, 0xFF);
     SDL_RenderClear(m_Renderer);
 
+    for (auto f : m_Flicks)
     {
-        std::unique_lock<std::mutex> lk(m_Mutex);
-
-        SDL_Rect r;
-        for (auto& e : m_Purview)
-        {
-            e.F(r);
-        }
+        Copy(f->read_key(), f->read_rect());
     }
 
     SDL_RenderPresent(m_Renderer);
