@@ -32,7 +32,6 @@ struct Quartz
 
 private:
     std::atomic<bool> m_Power;
-    std::thread m_Thread;
 
     uint32_t m_ToothTokens;
     std::mutex m_Mutex;
@@ -40,4 +39,6 @@ private:
 
     std::set<Cog*> m_Cogs;
     std::mutex m_CogsMutex;
+
+    std::thread m_Thread;
 };

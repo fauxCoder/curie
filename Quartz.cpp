@@ -8,8 +8,8 @@ const uint32_t Quartz::s_Frequency = 1000 / s_FPS;
 
 Quartz::Quartz()
 : m_Power(true)
-, m_Thread(&Quartz::Resonate, this)
 , m_ToothTokens(0)
+, m_Thread(&Quartz::Resonate, this)
 {
 }
 
@@ -23,7 +23,8 @@ void Quartz::Resonate()
 {
     while (m_Power.load())
     {
-        uint32_t start = SDL_GetTicks();
+        // uint32_t start = SDL_GetTicks();
+        // auto start = std::chrono::steady_clock::now();
 
         {
             bool power = true;
@@ -48,10 +49,13 @@ void Quartz::Resonate()
             }
         }
 
-        uint32_t elapsed = SDL_GetTicks() - start;
-        if (elapsed < s_Frequency)
+        // uint32_t elapsed = SDL_GetTicks() - start;
+        // auto end = std::chrono::steady_clock::now();
+        // std::chrono::duration<double, std::milli> elapsed = end - start;
+        // if (((uint32_t)elapsed.count()) < s_Frequency)
         {
-            SDL_Delay(s_Frequency - elapsed);
+           // SDL_Delay(s_Frequency - elapsed);
+            std::this_thread::sleep_for(std::chrono::milliseconds{25});
         }
     }
 }

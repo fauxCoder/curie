@@ -22,11 +22,9 @@ void RM::Destroy(SDL_Window* a_Window)
 
 RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Window(a_Window)
+, m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED))
 , m_Cog(a_Q, std::bind(&RM::See, this))
-, m_Renderer(nullptr)
 {
-    m_Renderer = SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED);
-
     IMG_Init(IMG_INIT_PNG);
 }
 

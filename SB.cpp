@@ -2,7 +2,7 @@
 
 #include <Curie/Quartz.h>
 
-#include <assert.h>
+#include <cassert>
 
 SDL_AudioDeviceID SB::Open(SB* a_SB, uint32_t a_Channels)
 {
@@ -30,8 +30,6 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 {
     SB* sb = static_cast<SB*>(a_SB);
 
-    std::unique_lock<std::mutex> lk(sb->m_WriteMutex);
-
     if (sb->m_Queue.size() > 0)
     {
         memcpy(a_Stream, sb->m_Queue.front().data(), a_Length);
@@ -45,21 +43,17 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 
 void SB::Close(SDL_AudioDeviceID a_Device, std::mutex& a_Mutex)
 {
-    SDL_PauseAudioDevice(a_Device, 0);
-
-    std::unique_lock<std::mutex> lk(a_Mutex);
-
     SDL_CloseAudioDevice(a_Device);
 }
 
 SB::SB(Quartz& a_Q, uint32_t a_Channels)
-: m_Device(Open(this, a_Channels))
+// : m_Device(Open(this, a_Channels))
 {
 }
 
 SB::~SB()
 {
-    Close(m_Device, m_WriteMutex);
+    // Close(m_Device, m_WriteMutex);
 }
 
 uint32_t SB::SForF(double a_Frames)
