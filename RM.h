@@ -50,12 +50,13 @@ struct RM
 
     void Copy(Image& a_Image, SDL_Rect& a_Rect);
 
+    Quartz& m_Q;
     SDL_Window& m_Window;
     SDL_Renderer* m_Renderer;
 
     std::mutex m_Mutex;
     std::map<uint32_t, Image> m_Images;
-    std::list<Flick*> m_Flicks;
+    std::set<Flick*> m_Flicks;
 
     Cog m_Cog;
 };

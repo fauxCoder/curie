@@ -47,13 +47,13 @@ void SB::Close(SDL_AudioDeviceID a_Device, std::mutex& a_Mutex)
 }
 
 SB::SB(Quartz& a_Q, uint32_t a_Channels)
-// : m_Device(Open(this, a_Channels))
+: m_Device(Open(this, a_Channels))
 {
 }
 
 SB::~SB()
 {
-    // Close(m_Device, m_WriteMutex);
+    Close(m_Device, m_WriteMutex);
 }
 
 uint32_t SB::SForF(double a_Frames)

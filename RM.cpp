@@ -1,3 +1,4 @@
+#include <Curie/Quartz.h>
 #include <Curie/RM.h>
 
 #include <SDL2/SDL_image.h>
@@ -21,7 +22,8 @@ void RM::Destroy(SDL_Window* a_Window)
 }
 
 RM::RM(Quartz& a_Q, SDL_Window& a_Window)
-: m_Window(a_Window)
+: m_Q(a_Q)
+, m_Window(a_Window)
 , m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED))
 , m_Cog(a_Q, std::bind(&RM::See, this))
 {
@@ -60,13 +62,15 @@ Image* RM::GetImage(uint32_t a_Key)
 
 Flick* RM::AddFlick()
 {
-    m_Flicks.push_back(new Flick());
-    return m_Flicks.back();
+    auto ret = m_Flicks.insert(new Flick(m_Q.GetSwitch()));
+    assert(ret.second);
+    return *(ret.first);
 }
 
 void RM::RemoveFlick(Flick* a_Flick)
 {
-    m_Flicks.remove(a_Flick);
+    m_Flicks.erase(a_Flick);
+    delete a_Flick;
 }
 
 void RM::See()

@@ -1,5 +1,6 @@
 #include <Curie/Cog.h>
 #include <Curie/Quartz.h>
+#include <Curie/Flick.h>
 
 #include <chrono>
 
@@ -9,6 +10,7 @@ const uint32_t Quartz::s_Frequency = 1000 / s_FPS;
 Quartz::Quartz()
 : m_Power(true)
 , m_ToothTokens(0)
+, m_Switch(0)
 , m_Thread(&Quartz::Resonate, this)
 {
 }
@@ -27,18 +29,25 @@ void Quartz::Resonate()
         // auto start = std::chrono::steady_clock::now();
 
         {
+            std::unique_lock<std::mutex> lk(m_Mutex);
+
+            if (m_ToothTokens)
+                m_ToothTokens = 0;
+        }
+
+        m_Monitor.notify_one();
+
+        {
             bool power = true;
             std::unique_lock<std::mutex> lk(m_Mutex);
+
             m_Monitor.wait_for(lk, std::chrono::milliseconds(s_Frequency), [&]{
                 return (m_ToothTokens > 0) || ( ! (power = m_Power.load()));
             });
-            m_ToothTokens--;
 
             if ( ! power)
                 break;
         }
-
-        m_Monitor.notify_one();
 
         {
             std::unique_lock<std::mutex> lk(m_CogsMutex);
@@ -54,8 +63,8 @@ void Quartz::Resonate()
         // std::chrono::duration<double, std::milli> elapsed = end - start;
         // if (((uint32_t)elapsed.count()) < s_Frequency)
         {
-           // SDL_Delay(s_Frequency - elapsed);
-            std::this_thread::sleep_for(std::chrono::milliseconds{25});
+            // SDL_Delay(s_Frequency - elapsed);
+            std::this_thread::sleep_for(std::chrono::milliseconds{40});
         }
     }
 }
@@ -67,6 +76,9 @@ void Quartz::Tooth()
         m_Monitor.wait_for(lk, std::chrono::milliseconds(s_Frequency), [&]{
             return m_ToothTokens == 0;
         });
+
+        m_Switch ^= 0x1;
+
         m_ToothTokens++;
     }
 

@@ -4,26 +4,30 @@
 
 struct Flick
 {
-    Flick(){}
+    Flick(uint8_t& a_I)
+    : m_I(a_I)
+    {}
 
     ~Flick(){}
 
     void write(uint32_t a_Key, SDL_Rect a_Rect)
     {
-        m_Key = a_Key;
-        m_Rect = a_Rect;
+        m_Key[m_I] = a_Key;
+        m_Rect[m_I] = a_Rect;
     }
 
     uint32_t read_key()
     {
-        return m_Key;
+        return m_Key[m_I ^ 0x1];
     }
 
     SDL_Rect& read_rect()
     {
-        return m_Rect;
+        return m_Rect[m_I ^ 0x1];
     }
 
-    uint32_t m_Key;
-    SDL_Rect m_Rect;
+    uint8_t& m_I;
+
+    uint32_t m_Key[2];
+    SDL_Rect m_Rect[2];
 };
