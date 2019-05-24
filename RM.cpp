@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL_image.h>
 
+#include <cassert>
+
 uint32_t RM::s_ScreenWidth = 640;
 uint32_t RM::s_ScreenHeight = 480;
 

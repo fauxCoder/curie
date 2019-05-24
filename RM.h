@@ -5,14 +5,10 @@
 
 #include <SDL2/SDL.h>
 
-#include <cassert>
-#include <functional>
-#include <list>
 #include <map>
 #include <mutex>
 #include <set>
 #include <string>
-#include <vector>
 
 struct Quartz;
 
