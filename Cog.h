@@ -7,14 +7,13 @@ struct Quartz;
 
 struct Cog
 {
-    Cog(Quartz& a_Q, std::function<void(void)> a_Function);
+    Cog(Quartz& a_Q, std::function<void(void)> a_Contact, std::function<void(void)> a_Move);
 
     ~Cog();
-
-    void Move();
 
     std::mutex& GetMutex();
 
     Quartz& m_Q;
-    std::function<void(void)> m_Function;
+    std::function<void(void)> m_Contact;
+    std::function<void(void)> m_Move;
 };

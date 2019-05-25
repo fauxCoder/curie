@@ -10,7 +10,6 @@ const uint32_t Quartz::s_Frequency = 1000 / s_FPS;
 Quartz::Quartz()
 : m_Power(true)
 , m_ToothTokens(0)
-, m_Switch(0)
 , m_Thread(&Quartz::Resonate, this)
 {
 }
@@ -54,7 +53,7 @@ void Quartz::Resonate()
 
             for (auto c : m_Cogs)
             {
-                c->Move();
+                c->m_Move();
             }
         }
 
@@ -77,7 +76,14 @@ void Quartz::Tooth()
             return m_ToothTokens == 0;
         });
 
-        m_Switch ^= 0x1;
+        {
+            std::unique_lock<std::mutex> lk(m_CogsMutex);
+
+            for (auto c : m_Cogs)
+            {
+                c->m_Contact();
+            }
+        }
 
         m_ToothTokens++;
     }

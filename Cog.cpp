@@ -1,9 +1,10 @@
 #include <Curie/Cog.h>
 #include <Curie/Quartz.h>
 
-Cog::Cog(Quartz& a_Q, std::function<void(void)> a_Function)
+Cog::Cog(Quartz& a_Q, std::function<void(void)> a_Contact, std::function<void(void)> a_Move)
 : m_Q(a_Q)
-, m_Function(a_Function)
+, m_Contact(a_Contact)
+, m_Move(a_Move)
 {
     std::unique_lock<std::mutex> lk(m_Q.m_CogsMutex);
     m_Q.m_Cogs.insert(this);
@@ -13,11 +14,6 @@ Cog::~Cog()
 {
     std::unique_lock<std::mutex> lk(m_Q.m_CogsMutex);
     m_Q.m_Cogs.erase(this);
-}
-
-void Cog::Move()
-{
-    m_Function();
 }
 
 std::mutex& Cog::GetMutex()

@@ -9,7 +9,6 @@
 #include <set>
 
 struct Cog;
-struct Switch;
 
 struct Quartz
 {
@@ -31,8 +30,6 @@ struct Quartz
 
     void Waitms(uint32_t a_ms) { Wait(a_ms / s_Frequency); }
 
-    uint8_t& GetSwitch() { return m_Switch; }
-
 private:
     std::atomic<bool> m_Power;
 
@@ -42,8 +39,6 @@ private:
 
     std::set<Cog*> m_Cogs;
     std::mutex m_CogsMutex;
-
-    uint8_t m_Switch;
 
     std::thread m_Thread;
 };

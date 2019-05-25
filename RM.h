@@ -40,6 +40,8 @@ struct RM
 
     void RemoveFlick(Flick* a_Flick);
 
+    void Switch();
+
     void See();
 
     void Copy(uint32_t a_Key, SDL_Rect& a_Rect);

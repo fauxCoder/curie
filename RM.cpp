@@ -27,7 +27,7 @@ RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Q(a_Q)
 , m_Window(a_Window)
 , m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED))
-, m_Cog(a_Q, std::bind(&RM::See, this))
+, m_Cog(a_Q, std::bind(&RM::Switch, this), std::bind(&RM::See, this))
 {
     IMG_Init(IMG_INIT_PNG);
 }
@@ -64,7 +64,7 @@ Image* RM::GetImage(uint32_t a_Key)
 
 Flick* RM::AddFlick()
 {
-    auto ret = m_Flicks.insert(new Flick(m_Q.GetSwitch()));
+    auto ret = m_Flicks.insert(new Flick());
     assert(ret.second);
     return *(ret.first);
 }
@@ -73,6 +73,14 @@ void RM::RemoveFlick(Flick* a_Flick)
 {
     m_Flicks.erase(a_Flick);
     delete a_Flick;
+}
+
+void RM::Switch()
+{
+    for (auto f : m_Flicks)
+    {
+        f->Switch();
+    }
 }
 
 void RM::See()
