@@ -53,7 +53,8 @@ void Quartz::Resonate()
 
             for (auto c : m_Cogs)
             {
-                c->m_Move();
+                if (c->alive())
+                    c->m_Move();
             }
         }
 
@@ -81,7 +82,8 @@ void Quartz::Tooth()
 
             for (auto c : m_Cogs)
             {
-                c->m_Contact();
+                if (c->alive())
+                    c->m_Contact();
             }
         }
 

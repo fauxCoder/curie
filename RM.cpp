@@ -34,6 +34,7 @@ RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 
 RM::~RM()
 {
+    m_Cog.m_Dead = true;
 }
 
 void RM::AddImage(uint32_t a_Key, std::string a_Image)
@@ -90,7 +91,10 @@ void RM::See()
 
     for (auto f : m_Flicks)
     {
-        Copy(f->read_key(), f->read_rect());
+        if (f->yes())
+        {
+            Copy(f->read_key(), f->read_rect());
+        }
     }
 
     SDL_RenderPresent(m_Renderer);

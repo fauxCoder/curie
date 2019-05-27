@@ -5,6 +5,7 @@ Cog::Cog(Quartz& a_Q, std::function<void(void)> a_Contact, std::function<void(vo
 : m_Q(a_Q)
 , m_Contact(a_Contact)
 , m_Move(a_Move)
+, m_Dead(false)
 {
     std::unique_lock<std::mutex> lk(m_Q.m_CogsMutex);
     m_Q.m_Cogs.insert(this);
