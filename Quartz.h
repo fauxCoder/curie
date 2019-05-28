@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -16,7 +17,7 @@ struct Quartz
 
     static const uint32_t s_FPS;
 
-    static const uint32_t s_Frequency;
+    static const std::chrono::milliseconds s_FrameLength;
 
     Quartz();
 
@@ -28,7 +29,7 @@ struct Quartz
 
     void Wait(uint32_t a_Moves);
 
-    void Waitms(uint32_t a_ms) { Wait(a_ms / s_Frequency); }
+    void Waitms(uint32_t a_ms) { Wait(a_ms / s_FrameLength.count()); }
 
 private:
     std::atomic<bool> m_Power;
