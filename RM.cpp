@@ -37,25 +37,26 @@ RM::~RM()
     m_Cog.m_Dead = true;
 }
 
-void RM::AddImage(uint32_t a_Key, std::string a_Image)
+uint32_t RM::AddImage(std::string a_Image)
 {
     SDL_Surface* loadedSurface = IMG_Load(a_Image.c_str());
     if (loadedSurface == nullptr)
     {
         printf("Unable to load image! SDL_image Error: %s\n", IMG_GetError());
+        return 0;
     }
     else
     {
-        m_Images[a_Key] = { SDL_CreateTextureFromSurface(m_Renderer, loadedSurface), loadedSurface->w, loadedSurface->h };
+        m_Images.emplace_back(new Image(SDL_CreateTextureFromSurface(m_Renderer, loadedSurface), loadedSurface->w, loadedSurface->h));
+        return m_Images.size() - 1;
     }
 }
 
 Image* RM::GetImage(uint32_t a_Key)
 {
-    auto it = m_Images.find(a_Key);
-    if (it != m_Images.end())
+    if (a_Key >= m_Images.size())
     {
-        return &(it->second);
+        return m_Images[a_Key].get();
     }
     else
     {
@@ -102,16 +103,16 @@ void RM::See()
 
 void RM::Copy(uint32_t a_Key, SDL_Rect& a_Rect)
 {
-    auto t = m_Images.find(a_Key);
-    if (t != m_Images.end())
+    auto i = GetImage(a_Key);
+    if (i)
     {
-        Copy(t->second, a_Rect);
+        Copy(i, a_Rect);
     }
 }
 
-void RM::Copy(Image& a_Image, SDL_Rect& a_Rect)
+void RM::Copy(Image* a_Image, SDL_Rect& a_Rect)
 {
-    a_Rect.w *= a_Image.W;
-    a_Rect.h *= a_Image.H;
-    SDL_RenderCopy(m_Renderer, (a_Image.Texture), nullptr, &a_Rect);
+    a_Rect.w = a_Image->W;
+    a_Rect.h = a_Image->H;
+    SDL_RenderCopy(m_Renderer, (a_Image->Texture), nullptr, &a_Rect);
 }

@@ -57,7 +57,7 @@ void Quartz::Resonate()
             }
         }
 
-        auto elapsed = steady_clock::now() - start;
+        auto elapsed = duration_cast<milliseconds>(steady_clock::now() - start);
         if (elapsed < s_FrameLength)
         {
             std::this_thread::sleep_for(s_FrameLength - elapsed);

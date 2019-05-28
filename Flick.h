@@ -11,7 +11,6 @@ struct Flick
         m_Yes[1] = false;
     }
 
-
     ~Flick(){}
 
     void Switch()
