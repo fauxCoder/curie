@@ -13,12 +13,17 @@ struct Flick
 
     ~Flick(){}
 
-    void Switch()
+    bool Switch()
     {
         if (m_Yes[m_I])
         {
             m_I ^= 0x1;
             m_Yes[m_I] = false;
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 

@@ -27,6 +27,7 @@ RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Q(a_Q)
 , m_Window(a_Window)
 , m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED))
+, m_Draw(false)
 , m_Cog(a_Q, std::bind(&RM::Switch, this), std::bind(&RM::See, this))
 {
     IMG_Init(IMG_INIT_PNG);
@@ -54,7 +55,7 @@ uint32_t RM::AddImage(std::string a_Image)
 
 Image* RM::GetImage(uint32_t a_Key)
 {
-    if (a_Key >= m_Images.size())
+    if (a_Key < m_Images.size())
     {
         return m_Images[a_Key].get();
     }
@@ -79,14 +80,19 @@ void RM::RemoveFlick(Flick* a_Flick)
 
 void RM::Switch()
 {
+    m_Draw = false;
+
     for (auto f : m_Flicks)
     {
-        f->Switch();
+        m_Draw = f->Switch() || m_Draw;
     }
 }
 
 void RM::See()
 {
+    // if ( ! m_Draw)
+    //     return;
+
     SDL_SetRenderDrawColor(m_Renderer, 0x22, 0x22, 0x22, 0xFF);
     SDL_RenderClear(m_Renderer);
 

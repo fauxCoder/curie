@@ -63,6 +63,7 @@ struct RM
     std::mutex m_Mutex;
     std::vector<std::unique_ptr<Image>> m_Images;
     std::set<Flick*> m_Flicks;
+    bool m_Draw;
 
     Cog m_Cog;
 };
