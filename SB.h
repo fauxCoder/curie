@@ -32,6 +32,8 @@ struct SB
 
     void PlaySound(uint32_t a_Key);
 
+    Quartz& m_Q;
+
     SDL_AudioDeviceID m_Device;
 
     SDL_AudioSpec m_Have;

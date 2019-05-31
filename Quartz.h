@@ -15,11 +15,7 @@ struct Quartz
 {
     friend Cog;
 
-    static const uint32_t s_FPS;
-
-    static const std::chrono::milliseconds s_FrameLength;
-
-    Quartz();
+    Quartz(uint32_t a_FPS);
 
     ~Quartz();
 
@@ -29,7 +25,11 @@ struct Quartz
 
     void Wait(uint32_t a_Moves);
 
-    void Waitms(uint32_t a_ms) { Wait(a_ms / s_FrameLength.count()); }
+    void Waitms(uint32_t a_ms) { Wait(a_ms / m_FrameLength.count()); }
+
+public:
+    const uint32_t m_FPS;
+    const std::chrono::milliseconds m_FrameLength;
 
 private:
     std::atomic<bool> m_Power;

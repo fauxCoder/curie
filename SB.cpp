@@ -47,7 +47,8 @@ void SB::Close(SDL_AudioDeviceID a_Device, std::mutex& a_Mutex)
 }
 
 SB::SB(Quartz& a_Q, uint32_t a_Channels)
-: m_Device(Open(this, a_Channels))
+: m_Q(a_Q)
+, m_Device(Open(this, a_Channels))
 {
 }
 
@@ -58,7 +59,7 @@ SB::~SB()
 
 uint32_t SB::SForF(double a_Frames)
 {
-    return a_Frames * ((double)m_Have.freq / (double)Quartz::s_FPS);
+    return a_Frames * ((double)m_Have.freq / (double)m_Q.m_FPS);
 }
 
 void SB::AddSound(uint32_t a_Key, uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t&)> a_Func)

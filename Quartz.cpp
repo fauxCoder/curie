@@ -4,11 +4,10 @@
 
 using namespace std::chrono;
 
-const uint32_t Quartz::s_FPS = 25;
-const milliseconds Quartz::s_FrameLength = milliseconds(1000 / s_FPS);
-
-Quartz::Quartz()
-: m_Power(true)
+Quartz::Quartz(uint32_t a_FPS)
+: m_FPS(a_FPS)
+, m_FrameLength(1000 / a_FPS)
+, m_Power(true)
 , m_ToothTokens(0)
 , m_Thread(&Quartz::Resonate, this)
 {
@@ -39,7 +38,7 @@ void Quartz::Resonate()
             bool power = true;
             std::unique_lock<std::mutex> lk(m_Mutex);
 
-            m_Monitor.wait_for(lk, s_FrameLength, [&]{
+            m_Monitor.wait_for(lk, m_FrameLength, [&]{
                 return (m_ToothTokens > 0) || ( ! (power = m_Power.load()));
             });
 
@@ -58,9 +57,9 @@ void Quartz::Resonate()
         }
 
         auto elapsed = duration_cast<milliseconds>(steady_clock::now() - start);
-        if (elapsed < s_FrameLength)
+        if (elapsed < m_FrameLength)
         {
-            std::this_thread::sleep_for(s_FrameLength - elapsed);
+            std::this_thread::sleep_for(m_FrameLength - elapsed);
         }
     }
 }
@@ -69,7 +68,7 @@ void Quartz::Tooth()
 {
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
-        m_Monitor.wait_for(lk, s_FrameLength, [&]{
+        m_Monitor.wait_for(lk, m_FrameLength, [&]{
             return m_ToothTokens == 0;
         });
 
