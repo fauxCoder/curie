@@ -31,11 +31,13 @@ RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 , m_Cog(a_Q, std::bind(&RM::Switch, this), std::bind(&RM::See, this))
 {
     IMG_Init(IMG_INIT_PNG);
+
+    m_Cog.m_Engaged.store(true);
 }
 
 RM::~RM()
 {
-    m_Cog.m_Dead = true;
+    m_Cog.m_Engaged.store(false);
 }
 
 uint32_t RM::AddImage(std::string a_Image)
@@ -67,6 +69,8 @@ Image* RM::GetImage(uint32_t a_Key)
 
 Flick* RM::AddFlick()
 {
+    std::unique_lock<std::mutex> lk(m_FlicksMutex);
+
     auto ret = m_Flicks.insert(new Flick());
     assert(ret.second);
     return *(ret.first);
@@ -74,18 +78,24 @@ Flick* RM::AddFlick()
 
 void RM::RemoveFlick(Flick* a_Flick)
 {
+    std::unique_lock<std::mutex> lk(m_FlicksMutex);
+
     m_Flicks.erase(a_Flick);
     delete a_Flick;
 }
 
 void RM::Switch()
 {
-    m_Draw = false;
+    bool draw = false;
+
+    std::unique_lock<std::mutex> lk(m_FlicksMutex);
 
     for (auto f : m_Flicks)
     {
-        m_Draw = f->Switch() || m_Draw;
+        draw = f->Switch() || draw;
     }
+
+    m_Draw = draw;
 }
 
 void RM::See()
@@ -96,11 +106,15 @@ void RM::See()
     SDL_SetRenderDrawColor(m_Renderer, 0x22, 0x22, 0x22, 0xFF);
     SDL_RenderClear(m_Renderer);
 
-    for (auto f : m_Flicks)
     {
-        if (f->yes())
+        std::unique_lock<std::mutex> lk(m_FlicksMutex);
+
+        for (auto f : m_Flicks)
         {
-            Copy(f->read_key(), f->read_rect());
+            if (f->yes())
+            {
+                Copy(f->read_key(), f->read_rect());
+            }
         }
     }
 

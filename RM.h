@@ -60,9 +60,11 @@ struct RM
     SDL_Window& m_Window;
     SDL_Renderer* m_Renderer;
 
-    std::mutex m_Mutex;
     std::vector<std::unique_ptr<Image>> m_Images;
+
+    std::mutex m_FlicksMutex;
     std::set<Flick*> m_Flicks;
+
     bool m_Draw;
 
     Cog m_Cog;

@@ -52,7 +52,7 @@ void Quartz::Resonate()
 
             for (auto c : m_Cogs)
             {
-                if (c->alive())
+                if (c->m_Engaged.load())
                     c->m_Move();
             }
         }
@@ -78,7 +78,7 @@ void Quartz::Tooth()
 
             for (auto c : m_Cogs)
             {
-                if (c->alive())
+                if (c->m_Engaged.load())
                     c->m_Contact();
             }
         }

@@ -38,8 +38,8 @@ private:
     std::mutex m_Mutex;
     std::condition_variable m_Monitor;
 
-    std::set<Cog*> m_Cogs;
     std::mutex m_CogsMutex;
+    std::set<Cog*> m_Cogs;
 
     std::thread m_Thread;
 };

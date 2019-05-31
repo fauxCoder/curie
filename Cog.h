@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <mutex>
 
@@ -13,10 +14,8 @@ struct Cog
 
     std::mutex& GetMutex();
 
-    bool alive() { return ! m_Dead; }
-
     Quartz& m_Q;
     std::function<void(void)> m_Contact;
     std::function<void(void)> m_Move;
-    bool m_Dead;
+    std::atomic<bool> m_Engaged;
 };
