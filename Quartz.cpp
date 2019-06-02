@@ -52,7 +52,7 @@ void Quartz::Resonate()
             for (auto c : m_Cogs)
             {
                 if (c->m_Engaged.load())
-                    c->m_Move();
+                    c->m_Tooth();
             }
         }
 
@@ -78,7 +78,7 @@ void Quartz::Tooth()
             for (auto c : m_Cogs)
             {
                 if (c->m_Engaged.load())
-                    c->m_Contact();
+                    c->m_Lobe();
             }
         }
 
@@ -88,7 +88,7 @@ void Quartz::Tooth()
     m_Monitor.notify_one();
 }
 
-void Quartz::Wait(uint32_t a_Moves)
+void Quartz::Teeth(uint32_t a_Moves)
 {
     while (a_Moves > 0)
     {

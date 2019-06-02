@@ -23,9 +23,9 @@ struct Quartz
 
     void Tooth();
 
-    void Wait(uint32_t a_Moves);
+    void Teeth(uint32_t a_Moves);
 
-    void Waitms(uint32_t a_ms) { Wait(a_ms / m_FrameLength.count()); }
+    void Wait(uint32_t a_ms) { Teeth(a_ms / m_FrameLength.count()); }
 
 public:
     const uint32_t m_FPS;
