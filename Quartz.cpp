@@ -1,6 +1,5 @@
 #include <Curie/Cog.h>
 #include <Curie/Quartz.h>
-#include <Curie/Flick.h>
 
 using namespace std::chrono;
 
