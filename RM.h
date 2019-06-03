@@ -1,10 +1,11 @@
 #pragma once
 
 #include <Curie/Cog.h>
-#include <Curie/Flick.h>
+#include <Curie/CiCa.h>
 
 #include <SDL2/SDL.h>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -32,7 +33,7 @@ struct RM
     static uint32_t s_ScreenWidth;
     static uint32_t s_ScreenHeight;
 
-    static SDL_Window* Create();
+    static SDL_Window* CreateWindow();
 
     static void Destroy(SDL_Window* a_Window);
 
@@ -44,9 +45,9 @@ struct RM
 
     Image* GetImage(uint32_t a_Key);
 
-    Flick* AddFlick();
+    CiCa::End** Add();
 
-    void RemoveFlick(Flick* a_Flick);
+    void Remove(CiCa::End** a_End);
 
     void Switch();
 
@@ -62,10 +63,10 @@ struct RM
 
     std::vector<std::unique_ptr<Image>> m_Images;
 
-    std::mutex m_FlicksMutex;
-    std::set<Flick*> m_Flicks;
+    std::mutex m_BuffersMutex;
+    std::map<CiCa::End**, CiCa*> m_Buffers;
 
-    bool m_Draw;
+    std::atomic<bool> m_Draw;
 
     Cog m_Cog;
 };

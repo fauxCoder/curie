@@ -8,7 +8,7 @@
 uint32_t RM::s_ScreenWidth = 640;
 uint32_t RM::s_ScreenHeight = 480;
 
-SDL_Window* RM::Create()
+SDL_Window* RM::CreateWindow()
 {
     SDL_Window* window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN /*SDL_WINDOW_FULLSCREEN*/);
     assert(window);
@@ -67,53 +67,64 @@ Image* RM::GetImage(uint32_t a_Key)
     }
 }
 
-Flick* RM::AddFlick()
+CiCa::End** RM::Add()
 {
-    std::unique_lock<std::mutex> lk(m_FlicksMutex);
+    std::unique_lock<std::mutex> lk(m_BuffersMutex);
 
-    auto ret = m_Flicks.insert(new Flick());
+    auto cc = new CiCa();
+    auto ret = m_Buffers.emplace(&cc->m_W, cc);
     assert(ret.second);
-    return *(ret.first);
+    return &cc->m_W;
 }
 
-void RM::RemoveFlick(Flick* a_Flick)
+void RM::Remove(CiCa::End** a_End)
 {
-    std::unique_lock<std::mutex> lk(m_FlicksMutex);
+    std::unique_lock<std::mutex> lk(m_BuffersMutex);
 
-    m_Flicks.erase(a_Flick);
-    delete a_Flick;
+    auto it = m_Buffers.find(a_End);
+    assert(it != m_Buffers.end());
+    auto cc = it->second;
+    m_Buffers.erase(it);
+    delete cc;
 }
 
 void RM::Switch()
 {
     bool draw = false;
 
-    std::unique_lock<std::mutex> lk(m_FlicksMutex);
+    std::unique_lock<std::mutex> lk(m_BuffersMutex);
 
-    for (auto f : m_Flicks)
+    for (auto& b : m_Buffers)
     {
-        draw = f->Switch() || draw;
+        draw = b.second->pivot() || draw;
     }
 
-    m_Draw = draw;
+    m_Draw.store(draw);
 }
 
 void RM::See()
 {
-    // if ( ! m_Draw)
-    //     return;
+    // if ( ! m_Draw.load())
+    //    return;
 
     SDL_SetRenderDrawColor(m_Renderer, 0x22, 0x22, 0x22, 0xFF);
     SDL_RenderClear(m_Renderer);
 
     {
-        std::unique_lock<std::mutex> lk(m_FlicksMutex);
+        std::unique_lock<std::mutex> lk(m_BuffersMutex);
 
-        for (auto f : m_Flicks)
+        SDL_Rect r;
+        CiCa::End* e;
+        for (auto& b : m_Buffers)
         {
-            if (f->yes())
+            e = b.second->m_R;
+            if (e->Set)
             {
-                Copy(f->read_key(), f->read_rect());
+                r.x = e->X;
+                r.y = e->Y;
+                r.w = 1;
+                r.h = 1;
+                Copy(e->Key, r);
             }
         }
     }
@@ -132,7 +143,7 @@ void RM::Copy(uint32_t a_Key, SDL_Rect& a_Rect)
 
 void RM::Copy(Image* a_Image, SDL_Rect& a_Rect)
 {
-    a_Rect.w = a_Image->W;
-    a_Rect.h = a_Image->H;
+    a_Rect.w *= a_Image->W;
+    a_Rect.h *= a_Image->H;
     SDL_RenderCopy(m_Renderer, (a_Image->Texture), nullptr, &a_Rect);
 }

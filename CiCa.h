@@ -5,20 +5,28 @@
 
 struct CiCa
 {
-    struct Thing
+    struct End
     {
-        Thing()
+        End()
         : Key(0)
         , X(0)
         , Y(0)
-        , Go(false)
+        , Set(false)
         {
+        }
+
+        void write(uint32_t a_Key, int32_t a_X, int32_t a_Y)
+        {
+            Key = a_Key;
+            X = a_X;
+            Y = a_Y;
+            Set = true;
         }
 
         uint32_t Key;
         int32_t X;
         int32_t Y;
-        bool Go;
+        bool Set;
     };
 
     CiCa()
@@ -27,20 +35,12 @@ struct CiCa
     {
     }
 
-    void write(uint32_t a_Key, int32_t a_X, int32_t a_Y)
-    {
-        m_W->Key = a_Key;
-        m_W->X = a_X;
-        m_W->Y = a_Y;
-        m_W->Go = true;
-    }
-
     bool pivot()
     {
-        if (m_W->Go)
+        if (m_W->Set)
         {
             std::swap(m_W, m_R);
-            m_W->Go = false;
+            m_W->Set = false;
             return true;
         }
         else
@@ -49,7 +49,7 @@ struct CiCa
         }
     }
 
-    Thing m_Ts[2];
-    Thing* m_W;
-    Thing* m_R;
+    End m_Ts[2];
+    End* m_W;
+    End* m_R;
 };
