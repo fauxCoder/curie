@@ -77,7 +77,7 @@ void Quartz::Tooth()
             for (auto c : m_Cogs)
             {
                 if (c->m_Engaged.load())
-                    c->m_Lobe();
+                    c->m_Contact();
             }
         }
 

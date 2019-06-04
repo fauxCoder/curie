@@ -1,9 +1,9 @@
 #include <Curie/Cog.h>
 #include <Curie/Quartz.h>
 
-Cog::Cog(Quartz& a_Q, std::function<void(void)> a_Lobe, std::function<void(void)> a_Tooth)
+Cog::Cog(Quartz& a_Q, std::function<void(void)> a_Contact, std::function<void(void)> a_Tooth)
 : m_Q(a_Q)
-, m_Lobe(a_Lobe)
+, m_Contact(a_Contact)
 , m_Tooth(a_Tooth)
 , m_Engaged(false)
 {
