@@ -28,7 +28,9 @@ void Quartz::Resonate()
             std::unique_lock<std::mutex> lk(m_Mutex);
 
             if (m_ToothTokens)
+            {
                 m_ToothTokens = 0;
+            }
         }
 
         m_Monitor.notify_one();
@@ -37,7 +39,7 @@ void Quartz::Resonate()
             bool power = true;
             std::unique_lock<std::mutex> lk(m_Mutex);
 
-            m_Monitor.wait_for(lk, m_FrameLength, [&]{
+            m_Monitor.wait(lk, [&]{
                 return (m_ToothTokens > 0) || ( ! (power = m_Power.load()));
             });
 
@@ -67,7 +69,7 @@ void Quartz::Tooth()
 {
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
-        m_Monitor.wait_for(lk, m_FrameLength, [&]{
+        m_Monitor.wait(lk, [&]{
             return m_ToothTokens == 0;
         });
 
