@@ -37,6 +37,6 @@ void Input::Enter(std::function<void(void)> a_DefaultResponse)
 
         a_DefaultResponse();
 
-        m_Q.Wait(1);
+        m_Q.Tooth();
     }
 }
