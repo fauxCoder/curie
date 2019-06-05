@@ -66,7 +66,7 @@ struct RM
     std::mutex m_BuffersMutex;
     std::map<CiCa::End**, CiCa*> m_Buffers;
 
-    std::atomic<bool> m_Draw;
+    std::atomic<bool> m_Redraw;
 
     Cog m_Cog;
 };

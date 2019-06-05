@@ -4,6 +4,7 @@
 #include <SDL2/SDL_image.h>
 
 #include <cassert>
+#include <iostream>
 
 uint32_t RM::s_ScreenWidth = 640;
 uint32_t RM::s_ScreenHeight = 480;
@@ -27,7 +28,7 @@ RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Q(a_Q)
 , m_Window(a_Window)
 , m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED))
-, m_Draw(false)
+, m_Redraw(false)
 , m_Cog(a_Q, std::bind(&RM::Switch, this), std::bind(&RM::See, this))
 {
     IMG_Init(IMG_INIT_PNG);
@@ -90,16 +91,18 @@ void RM::Remove(CiCa::End** a_End)
 
 void RM::Switch()
 {
-    bool draw = false;
+    bool switched = false;
 
-    std::unique_lock<std::mutex> lk(m_BuffersMutex);
-
-    for (auto& b : m_Buffers)
     {
-        draw = b.second->pivot() || draw;
+        std::unique_lock<std::mutex> lk(m_BuffersMutex);
+
+        for (auto& b : m_Buffers)
+        {
+            switched = b.second->pivot() || switched;
+        }
     }
 
-    m_Draw.store(draw);
+    m_Redraw.store(switched);
 }
 
 void RM::See()
