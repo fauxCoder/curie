@@ -16,8 +16,3 @@ Cog::~Cog()
     std::unique_lock<std::mutex> lk(m_Q.m_CogsMutex);
     m_Q.m_Cogs.erase(this);
 }
-
-std::mutex& Cog::GetMutex()
-{
-    return m_Q.m_CogsMutex;
-}

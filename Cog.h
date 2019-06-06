@@ -12,8 +12,6 @@ struct Cog
 
     ~Cog();
 
-    std::mutex& GetMutex();
-
     Quartz& m_Q;
     std::function<void(void)> m_Contact;
     std::function<void(void)> m_Tooth;
