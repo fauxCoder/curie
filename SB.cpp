@@ -30,14 +30,25 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 {
     SB* sb = static_cast<SB*>(a_SB);
 
-    if (sb->m_Queue.size() > 0)
+    int32_t to_write = a_Length;
+
+    while (to_write > 0)
     {
-        memcpy(a_Stream, sb->m_Queue.front().data(), a_Length);
-        sb->m_Queue.pop_front();
-    }
-    else
-    {
-        memset(a_Stream, sb->m_Have.silence, a_Length);
+        if ( ! sb->m_Queue.empty())
+        {
+            size_t s = sb->m_Queue.front().size() * sizeof(output_t);
+            memcpy(a_Stream, sb->m_Queue.front().data(), s);
+
+            a_Stream += s;
+            to_write -= s;
+
+            sb->m_Queue.pop_front();
+        }
+        else
+        {
+            memset(a_Stream, sb->m_Have.silence, to_write);
+            break;
+        }
     }
 }
 
