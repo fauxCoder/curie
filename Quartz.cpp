@@ -15,6 +15,9 @@ Quartz::Quartz(uint32_t a_FPS)
 Quartz::~Quartz()
 {
     m_Power.store(false);
+
+    m_Monitor.notify_all();
+
     m_Thread.join();
 }
 
