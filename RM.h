@@ -30,6 +30,36 @@ struct Image
 
 struct RM
 {
+    struct Entry
+    {
+        Entry(CiCa* a_CiCa)
+        : m_CiCa(a_CiCa)
+        {
+        }
+
+        bool operator<(const Entry &e) const
+        {
+            if (m_CiCa->m_Priority == e.m_CiCa->m_Priority)
+            {
+                return m_CiCa < e.m_CiCa;
+            }
+            else
+            {
+                return m_CiCa->m_Priority < e.m_CiCa->m_Priority;
+            }
+        }
+
+        void write(uint32_t a_Key, int32_t a_X, int32_t a_Y)
+        {
+            m_CiCa->m_W->Key = a_Key;
+            m_CiCa->m_W->X = a_X;
+            m_CiCa->m_W->Y = a_Y;
+            m_CiCa->m_W->Set = true;
+        }
+
+        CiCa* m_CiCa;
+    };
+
     static uint32_t s_ScreenWidth;
     static uint32_t s_ScreenHeight;
 
@@ -45,9 +75,11 @@ struct RM
 
     Image* GetImage(uint32_t a_Key);
 
-    CiCa::End** Add();
+    Entry Add(int64_t a_Priority = 0);
 
-    void Remove(CiCa::End** a_End);
+    // void Adjust(CiCa::End** a_End, int64_t a_Priority);
+
+    void Remove(Entry a_Entry);
 
     void Switch();
 
@@ -63,8 +95,8 @@ struct RM
 
     std::vector<std::unique_ptr<Image>> m_Images;
 
-    std::mutex m_BuffersMutex;
-    std::map<CiCa::End**, CiCa*> m_Buffers;
+    std::mutex m_Mutex;
+    std::set<Entry> m_Entries;
 
     std::atomic<bool> m_Redraw;
 

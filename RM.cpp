@@ -68,24 +68,26 @@ Image* RM::GetImage(uint32_t a_Key)
     }
 }
 
-CiCa::End** RM::Add()
+RM::Entry RM::Add(int64_t a_Priority)
 {
-    std::unique_lock<std::mutex> lk(m_BuffersMutex);
+    std::unique_lock<std::mutex> lk(m_Mutex);
 
-    auto cc = new CiCa();
-    auto ret = m_Buffers.emplace(&cc->m_W, cc);
+    auto cc = new CiCa(a_Priority);
+    auto ret = m_Entries.emplace(cc);
     assert(ret.second);
-    return &cc->m_W;
+    return *ret.first;
 }
 
-void RM::Remove(CiCa::End** a_End)
-{
-    std::unique_lock<std::mutex> lk(m_BuffersMutex);
+// void RM::Adjust(CiCa::End** a_End, int64_t a_Priority)
 
-    auto it = m_Buffers.find(a_End);
-    assert(it != m_Buffers.end());
-    auto cc = it->second;
-    m_Buffers.erase(it);
+void RM::Remove(Entry a_Entry)
+{
+    std::unique_lock<std::mutex> lk(m_Mutex);
+
+    auto it = m_Entries.find(a_Entry);
+    assert(it != m_Entries.end());
+    auto cc = it->m_CiCa;
+    m_Entries.erase(it);
     delete cc;
 }
 
@@ -94,11 +96,11 @@ void RM::Switch()
     bool switched = false;
 
     {
-        std::unique_lock<std::mutex> lk(m_BuffersMutex);
+        std::unique_lock<std::mutex> lk(m_Mutex);
 
-        for (auto& b : m_Buffers)
+        for (auto& b : m_Entries)
         {
-            switched = b.second->pivot() || switched;
+            switched = b.m_CiCa->pivot() || switched;
         }
     }
 
@@ -114,13 +116,13 @@ void RM::See()
     SDL_RenderClear(m_Renderer);
 
     {
-        std::unique_lock<std::mutex> lk(m_BuffersMutex);
+        std::unique_lock<std::mutex> lk(m_Mutex);
 
         SDL_Rect r;
         CiCa::End* e;
-        for (auto& b : m_Buffers)
+        for (auto& b : m_Entries)
         {
-            e = b.second->m_R;
+            e = b.m_CiCa->m_R;
             if (e->Set)
             {
                 r.x = e->X;

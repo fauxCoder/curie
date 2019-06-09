@@ -15,23 +15,16 @@ struct CiCa
         {
         }
 
-        void write(uint32_t a_Key, int32_t a_X, int32_t a_Y)
-        {
-            Key = a_Key;
-            X = a_X;
-            Y = a_Y;
-            Set = true;
-        }
-
         uint32_t Key;
         int32_t X;
         int32_t Y;
         bool Set;
     };
 
-    CiCa()
+    CiCa(int64_t a_Priority)
     : m_W(&m_Ts[0])
     , m_R(&m_Ts[1])
+    , m_Priority(a_Priority)
     {
     }
 
@@ -52,4 +45,5 @@ struct CiCa
     End m_Ts[2];
     End* m_W;
     End* m_R;
+    int64_t m_Priority;
 };
