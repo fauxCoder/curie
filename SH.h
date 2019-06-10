@@ -18,6 +18,11 @@ struct SH
         return SH(t, l, shift, d + (std::sin((double)(t + shift) / f)));
     }
 
+    SH Saw(double f)
+    {
+        return SH(t, l, shift, d + (t * f));
+    }
+
     SH Scale(double s)
     {
         return SH(t, l, shift, d * s);

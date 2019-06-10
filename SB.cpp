@@ -73,11 +73,11 @@ uint32_t SB::SForF(double a_Frames)
     return a_Frames * ((double)m_Have.freq / (double)m_Q.m_FPS);
 }
 
-void SB::AddSound(uint32_t a_Key, uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t&)> a_Func)
+uint32_t SB::AddSound(uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t&)> a_Func)
 {
     std::unique_lock<std::mutex> lk(m_WriteMutex);
 
-    std::vector<working_t> data;
+    auto& data = m_Sounds.emplace_back();
     data.resize(a_CacheSamples);
 
     for(uint32_t t = 0; t < a_CacheSamples; ++t)
@@ -85,20 +85,20 @@ void SB::AddSound(uint32_t a_Key, uint32_t a_CacheSamples, std::function<void(ui
         a_Func(t, a_CacheSamples, data[t]);
     }
 
-    m_Sounds[a_Key] = data;
+    return m_Sounds.size() - 1;
 }
 
 void SB::PlaySound(uint32_t a_Key)
 {
-    auto s = m_Sounds.find(a_Key);
-
-    if (s != m_Sounds.end())
+    if (a_Key < m_Sounds.size())
     {
         std::unique_lock<std::mutex> lk(m_WriteMutex);
 
+        auto& s = m_Sounds[a_Key];
+
         auto last = &m_Queue.emplace_back();
         last->reserve(m_Have.samples);
-        for (auto& sample : s->second)
+        for (auto& sample : s)
         {
             if (last->size() >= m_Have.samples)
             {

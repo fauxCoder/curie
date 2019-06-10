@@ -28,7 +28,7 @@ struct SB
 
     uint32_t SForF(double a_Frames);
 
-    void AddSound(uint32_t a_Key, uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t&)> a_Func);
+    uint32_t AddSound(uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t&)> a_Func);
 
     void PlaySound(uint32_t a_Key);
 
@@ -39,6 +39,6 @@ struct SB
     SDL_AudioSpec m_Have;
 
     std::mutex m_WriteMutex;
-    std::map<uint32_t, std::vector<working_t>> m_Sounds;
+    std::vector<std::vector<working_t>> m_Sounds;
     std::deque<std::vector<output_t>> m_Queue;
 };
