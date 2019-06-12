@@ -77,8 +77,6 @@ struct RM
 
     Entry Add(int64_t a_Priority = 0);
 
-    // void Adjust(CiCa::End** a_End, int64_t a_Priority);
-
     void Remove(Entry a_Entry);
 
     void Switch();

@@ -78,8 +78,6 @@ RM::Entry RM::Add(int64_t a_Priority)
     return *ret.first;
 }
 
-// void RM::Adjust(CiCa::End** a_End, int64_t a_Priority)
-
 void RM::Remove(Entry a_Entry)
 {
     std::unique_lock<std::mutex> lk(m_Mutex);
