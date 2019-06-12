@@ -30,6 +30,8 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 {
     SB* sb = static_cast<SB*>(a_SB);
 
+    std::unique_lock<std::mutex> lk(sb->m_WriteMutex);
+
     int32_t to_write = a_Length;
 
     while (to_write > 0)
@@ -90,27 +92,53 @@ uint32_t SB::AddSound(uint32_t a_CacheSamples, std::function<void(uint32_t, uint
 
 void SB::PlaySound(uint32_t a_Key)
 {
+    std::unique_lock<std::mutex> lk(m_WriteMutex);
+
     if (a_Key < m_Sounds.size())
     {
-        std::unique_lock<std::mutex> lk(m_WriteMutex);
 
         auto& s = m_Sounds[a_Key];
 
-        auto last = &m_Queue.emplace_back();
-        last->reserve(m_Have.samples);
-        for (auto& sample : s)
-        {
-            if (last->size() >= m_Have.samples)
-            {
-                last = &m_Queue.emplace_back();
-            }
+        auto sample = s.begin();
 
-            last->emplace_back(static_cast<output_t>(sample * static_cast<working_t>(std::numeric_limits<output_t>::max())));
+        auto start = m_Queue.begin();
+        uint32_t samples_combined = 0;
+        while (start != m_Queue.end() && sample != s.end())
+        {
+            working_t existing =
+                static_cast<working_t>((*start).at(samples_combined))
+                / static_cast<working_t>(std::numeric_limits<output_t>::max());
+
+            working_t combined = existing + (*sample) - (existing * (*sample));
+
+            (*start).at(samples_combined) = static_cast<output_t>(combined * static_cast<working_t>(std::numeric_limits<output_t>::max()));
+
+            ++sample;
+            ++samples_combined;
+
+            if (samples_combined >= start->size())
+            {
+                samples_combined = 0;
+                ++start;
+            }
         }
 
-        while (last->size() < m_Have.samples)
+        std::vector<output_t>* last = nullptr;
+        while (sample != s.end())
         {
-            last->push_back(m_Have.silence);
+            if (last == nullptr || last->size() >= m_Have.samples)
+            {
+                last = &m_Queue.emplace_back();
+                last->reserve(m_Have.samples);
+            }
+
+            last->emplace_back(static_cast<output_t>((*sample) * static_cast<working_t>(std::numeric_limits<output_t>::max())));
+            ++sample;
+        }
+
+        while (last && last->size() < m_Have.samples)
+        {
+            last->emplace_back(m_Have.silence);
         }
     }
 }
