@@ -97,19 +97,34 @@ void SB::PlaySound(uint32_t a_Key)
     if (a_Key < m_Sounds.size())
     {
 
-        auto& s = m_Sounds[a_Key];
+        auto& sound = m_Sounds[a_Key];
 
-        auto sample = s.begin();
+        auto sample = sound.begin();
 
         auto start = m_Queue.begin();
         uint32_t samples_combined = 0;
-        while (start != m_Queue.end() && sample != s.end())
+        while (start != m_Queue.end() && sample != sound.end())
         {
-            working_t existing =
-                static_cast<working_t>((*start).at(samples_combined))
-                / static_cast<working_t>(std::numeric_limits<output_t>::max());
+            // move to hi fi
+            working_t existing = static_cast<working_t>((*start).at(samples_combined));
 
-            working_t combined = existing + (*sample) - (existing * (*sample));
+            // get into -1.0...+1.0 range
+            existing /= static_cast<working_t>(std::numeric_limits<output_t>::max());
+
+            // get values into 0.0...1.0 range
+            existing += 1.0;
+            existing *= 0.5;
+
+            working_t s = *sample;
+            s += 1.0;
+            s *= 0.5;
+
+            // combine
+            working_t combined = existing + s - (existing * s);
+
+            // get back to -1.0...+1.0
+            combined *= 2.0;
+            combined -= 1.0;
 
             (*start).at(samples_combined) = static_cast<output_t>(combined * static_cast<working_t>(std::numeric_limits<output_t>::max()));
 
@@ -124,7 +139,7 @@ void SB::PlaySound(uint32_t a_Key)
         }
 
         std::vector<output_t>* last = nullptr;
-        while (sample != s.end())
+        while (sample != sound.end())
         {
             if (last == nullptr || last->size() >= m_Have.samples)
             {
