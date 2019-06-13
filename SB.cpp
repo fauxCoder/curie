@@ -113,11 +113,11 @@ void SB::PlaySound(uint32_t a_Key)
 
             // get values into 0.0...1.0 range
             existing += 1.0;
-            existing *= 0.5;
+            existing /= 2.0;
 
             working_t s = *sample;
             s += 1.0;
-            s *= 0.5;
+            s /= 2.0;
 
             // combine
             working_t combined = existing + s - (existing * s);
