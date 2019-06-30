@@ -1,55 +1,86 @@
 #pragma once
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 
 struct SH
 {
-    SH(uint32_t a_t, uint32_t a_l, double a_d = 0.0)
+    SH(uint32_t a_t, uint32_t a_len, double a_data = 0.0)
     : t(a_t)
-    , l(a_l)
-    , d(a_d)
+    , len(a_len)
+    , data(a_data)
     {
     }
 
-    SH Sin(double f)
+    SH& Sin(double f)
     {
-        return SH(t, l, d + (std::sin((double)(t / f))));
+        data += std::sin((double)(t / f));
+
+        return *this;
     }
 
-    SH Saw(double f)
+    SH& Saw(double f)
     {
-        return SH(t, l, d + (t * f));
+        data += t * f;
+
+        return *this;
     }
 
-    SH Scale(double s)
+    SH& Scale(double s)
     {
-        return SH(t, l, d * s);
+        data *= s;
+
+        return *this;
     }
 
-    SH Cut(double c)
+    SH& Cut(double c)
     {
-        double level = c;
-
-        double out = d;
-        if (out > level)
+        if (data > c)
         {
-            out = level;
+            data = c;
         }
-        else if (d < -level)
+        else if (data < -c)
         {
-            out = -level;
+            data = -c;
         }
 
-        return SH(t, l, out);
+        return *this;
+    }
+
+    SH& Envelope(uint32_t atk, uint32_t dcy, double sst, uint32_t rel)
+    {
+        assert(len > t);
+        uint32_t togo = len - t;
+        if (togo < rel)
+        {
+            data *= sst;
+
+            assert(rel >= togo);
+            data *= static_cast<double>(rel - togo) / static_cast<double>(rel);
+        }
+        else if (t < atk)
+        {
+            data *= static_cast<double>(t) / static_cast<double>(atk);
+        }
+        else if (t < (atk + dcy))
+        {
+            data *= static_cast<double>((atk + dcy) - t) / static_cast<double>(dcy);
+        }
+        else
+        {
+            data *= sst;
+        }
+
+        return *this;
     }
 
     double Done()
     {
-        return d;
+        return data;
     }
 
-    uint32_t t;
-    uint32_t l;
-    double d;
+    const uint32_t t;
+    const uint32_t len;
+    double data;
 };
