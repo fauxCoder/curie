@@ -4,9 +4,12 @@
 
 #include <SDL2/SDL.h>
 
+#include <atomic>
 #include <deque>
 #include <functional>
+#include <list>
 #include <map>
+#include <thread>
 #include <vector>
 
 struct Quartz;
@@ -32,13 +35,21 @@ struct SB
 
     void PlaySound(uint32_t a_Key);
 
+    void QueueSound();
+
     Quartz& m_Q;
 
     SDL_AudioDeviceID m_Device;
-
     SDL_AudioSpec m_Have;
 
-    std::mutex m_WriteMutex;
     std::vector<std::vector<working_t>> m_Sounds;
-    std::deque<std::vector<output_t>> m_Queue;
+
+    std::mutex m_QueueMutex;
+    std::list<uint32_t> m_ToQueue;
+
+    std::mutex m_WriteMutex;
+    std::deque<std::vector<output_t>> m_ToWrite;
+
+    std::atomic<bool> m_Power;
+    std::thread m_Thread;
 };
