@@ -87,11 +87,13 @@ void RM::Remove(Entry a_Entry)
     auto cc = it->m_CiCa;
     m_Entries.erase(it);
     delete cc;
+
+    m_Redraw.store(true);
 }
 
 void RM::Switch()
 {
-    bool switched = false;
+    bool switched = m_Redraw.load();
 
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
@@ -107,8 +109,10 @@ void RM::Switch()
 
 void RM::See()
 {
-    // if ( ! m_Draw.load())
-    //    return;
+    if ( ! m_Redraw.load())
+        return;
+
+    m_Redraw.store(false);
 
     SDL_SetRenderDrawColor(m_Renderer, 0x22, 0x22, 0x22, 0xFF);
     SDL_RenderClear(m_Renderer);
