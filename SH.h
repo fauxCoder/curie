@@ -50,27 +50,31 @@ struct SH
 
     SH& Envelope(uint32_t atk, uint32_t dcy, double sst, uint32_t rel)
     {
+        double scale = 1.0;
+
         assert(len > t);
         uint32_t togo = len - t;
         if (togo < rel)
         {
-            data *= sst;
+            scale *= sst;
 
-            assert(rel >= togo);
-            data *= static_cast<double>(rel - togo) / static_cast<double>(rel);
+            scale *= static_cast<double>(togo) / static_cast<double>(rel);
         }
         else if (t < atk)
         {
-            data *= static_cast<double>(t) / static_cast<double>(atk);
+            scale *= static_cast<double>(t) / static_cast<double>(atk);
         }
         else if (t < (atk + dcy))
         {
-            data *= static_cast<double>((atk + dcy) - t) / static_cast<double>(dcy);
+            double leftover = static_cast<double>((atk + dcy) - t) / static_cast<double>(dcy);
+            scale *= (sst + ((1.0 - sst) * leftover));
         }
         else
         {
-            data *= sst;
+            scale *= sst;
         }
+
+        data *= scale;
 
         return *this;
     }
