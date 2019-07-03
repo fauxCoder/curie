@@ -32,9 +32,9 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 
     std::unique_lock<std::mutex> lk(sb->m_WriteMutex);
 
-    int32_t to_write = a_Length;
+    int32_t togo = a_Length;
 
-    while (to_write > 0)
+    while (togo > 0)
     {
         if ( ! sb->m_ToWrite.empty())
         {
@@ -42,13 +42,13 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
             memcpy(a_Stream, sb->m_ToWrite.front().data(), s);
 
             a_Stream += s;
-            to_write -= s;
+            togo -= s;
 
             sb->m_ToWrite.pop_front();
         }
         else
         {
-            memset(a_Stream, sb->m_Have.silence, to_write);
+            memset(a_Stream, sb->m_Have.silence, togo);
             break;
         }
     }
@@ -57,6 +57,33 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 void SB::Close(SDL_AudioDeviceID a_Device, std::mutex& a_Mutex)
 {
     SDL_CloseAudioDevice(a_Device);
+}
+
+SB::working_t SB::as_working(output_t a_S)
+{
+    return static_cast<working_t>(a_S) / static_cast<working_t>(std::numeric_limits<output_t>::max());
+}
+
+SB::output_t SB::as_output(working_t a_S)
+{
+    return static_cast<output_t>(a_S * static_cast<working_t>(std::numeric_limits<output_t>::max()));
+}
+
+SB::working_t SB::combine(working_t a_A, working_t a_B)
+{
+    working_t ret = a_A + a_B;
+
+    working_t correction = abs(a_A) * abs(a_B);
+    if (a_A > 0.0 && a_B > 0.0)
+    {
+        ret -= correction;
+    }
+    else if (a_A < 0.0 && a_B < 0.0)
+    {
+        ret += correction;
+    }
+
+    return ret;
 }
 
 SB::SB(Quartz& a_Q, uint32_t a_Channels)
@@ -130,28 +157,9 @@ void SB::QueueSound()
                 uint32_t samples_combined = 0;
                 while (start != m_ToWrite.end() && sample != sound.end())
                 {
-                    // move to hi fi
-                    working_t existing = static_cast<working_t>((*start).at(samples_combined));
+                    working_t combined = combine(as_working((*start).at(samples_combined)), (*sample));
 
-                    // get into -1.0...+1.0 range
-                    existing /= static_cast<working_t>(std::numeric_limits<output_t>::max());
-
-                    // get values into 0.0...1.0 range
-                    existing += 1.0;
-                    existing /= 2.0;
-
-                    working_t s = *sample;
-                    s += 1.0;
-                    s /= 2.0;
-
-                    // combine
-                    working_t combined = existing + s - (existing * s);
-
-                    // get back to -1.0...+1.0
-                    combined *= 2.0;
-                    combined -= 1.0;
-
-                    (*start).at(samples_combined) = static_cast<output_t>(combined * static_cast<working_t>(std::numeric_limits<output_t>::max()));
+                    start->at(samples_combined) = as_output(combined);
 
                     ++sample;
                     ++samples_combined;
@@ -172,7 +180,7 @@ void SB::QueueSound()
                         last->reserve(m_Have.samples);
                     }
 
-                    last->emplace_back(static_cast<output_t>((*sample) * static_cast<working_t>(std::numeric_limits<output_t>::max())));
+                    last->emplace_back(as_output(*sample));
                     ++sample;
                 }
 

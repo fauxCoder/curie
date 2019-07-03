@@ -25,6 +25,11 @@ struct SB
 
     static void Close(SDL_AudioDeviceID, std::mutex& a_Mutex);
 
+    static working_t as_working(output_t a_S);
+    static output_t as_output(working_t a_S);
+
+    static working_t combine(working_t a_A, working_t a_B);
+
     SB(Quartz& a_Q, uint32_t a_Channels);
 
     ~SB();
