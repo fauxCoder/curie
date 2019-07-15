@@ -27,7 +27,7 @@ void RM::Destroy(SDL_Window* a_Window)
 RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Q(a_Q)
 , m_Window(a_Window)
-, m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED))
+, m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC))
 , m_Redraw(false)
 , m_Cog(a_Q, std::bind(&RM::Switch, this), std::bind(&RM::See, this))
 {
