@@ -4,16 +4,16 @@
 
 #include <cstdint>
 
-struct Catch
+struct Lace
 {
-    Catch(Quartz& a_Q, uint32_t a_length)
+    Lace(Quartz& a_Q, uint32_t a_length)
     : m_Q(a_Q)
     , m_length(a_length)
     , m_waited(0)
     {
     }
 
-    ~Catch()
+    ~Lace()
     {
         while (m_waited < m_length)
         {

@@ -4,6 +4,7 @@
 void Input::Enter(std::function<void(void)> a_DefaultResponse)
 {
     SDL_PumpEvents();
+    SDL_FlushEvent(SDL_KEYUP);
     SDL_FlushEvent(SDL_KEYDOWN);
 
     bool done = false;
@@ -12,24 +13,31 @@ void Input::Enter(std::function<void(void)> a_DefaultResponse)
         SDL_Event e;
         while (SDL_PollEvent(&e) != 0)
         {
-            if (e.type == SDL_KEYDOWN)
+            if (e.type == SDL_KEYUP)
             {
-                bool found = false;
-                for (auto& kdr : m_KeyDownResponses)
+                for (auto& kdr : m_KeyUpResponses)
                 {
-                    for (auto k : kdr.first)
+                    for (auto k : kdr.first.codes)
                     {
                         if (k == e.key.keysym.sym)
                         {
                             done = kdr.second(k);
-                            found = true;
                             break;
                         }
                     }
-
-                    if (found)
+                }
+            }
+            else if (e.type == SDL_KEYDOWN)
+            {
+                for (auto& kdr : m_KeyDownResponses)
+                {
+                    for (auto k : kdr.first.codes)
                     {
-                        break;
+                        if (k == e.key.keysym.sym)
+                        {
+                            done = kdr.second(k);
+                            break;
+                        }
                     }
                 }
             }
