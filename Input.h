@@ -36,6 +36,16 @@ struct Input
 {
     Input(Quartz& a_Q) : m_Q(a_Q) {}
 
+    template<typename T>
+    void link(T& a_t)
+    {
+        m_KeyDownResponses[Catch(a_t.keys_down(), &a_t)] =
+            std::bind(&T::key_down, &a_t, std::placeholders::_1);
+
+        m_KeyUpResponses[Catch(a_t.keys_up(), &a_t)] =
+            std::bind(&T::key_up, &a_t, std::placeholders::_1);
+    }
+
     void Enter(std::function<void(void)> a_DefaultResponse);
 
     Quartz& m_Q;
