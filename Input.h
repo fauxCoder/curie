@@ -6,8 +6,6 @@
 #include <map>
 #include <set>
 
-struct Quartz;
-
 struct Catch
 {
     Catch(std::set<SDL_Keycode> a_codes, void* a_p = nullptr)
@@ -34,8 +32,6 @@ struct Catch
 
 struct Input
 {
-    Input(Quartz& a_Q) : m_Q(a_Q) {}
-
     template<typename T>
     void link(T& a_t)
     {
@@ -46,9 +42,8 @@ struct Input
             std::bind(&T::key_up, &a_t, std::placeholders::_1);
     }
 
-    void Enter(std::function<void(void)> a_DefaultResponse);
+    void open(std::function<void(void)> a_DefaultResponse);
 
-    Quartz& m_Q;
     std::map<Catch, std::function<bool(SDL_Keycode)>> m_KeyDownResponses;
     std::map<Catch, std::function<bool(SDL_Keycode)>> m_KeyUpResponses;
 };

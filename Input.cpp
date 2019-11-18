@@ -1,7 +1,6 @@
 #include <Curie/Input.h>
-#include <Curie/Quartz.h>
 
-void Input::Enter(std::function<void(void)> a_DefaultResponse)
+void Input::open(std::function<void(void)> a_DefaultResponse)
 {
     SDL_PumpEvents();
     SDL_FlushEvent(SDL_KEYUP);
@@ -44,7 +43,5 @@ void Input::Enter(std::function<void(void)> a_DefaultResponse)
         }
 
         a_DefaultResponse();
-
-        m_Q.Tooth();
     }
 }
