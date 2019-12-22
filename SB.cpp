@@ -71,28 +71,30 @@ SB::output_t SB::as_output(working_t a_S)
     return static_cast<output_t>(a_S * static_cast<working_t>(std::numeric_limits<output_t>::max()));
 }
 
-SB::working_t SB::combine(working_t a_A, working_t a_B)
+void SB::combine(working_t& o_A, working_t a_B)
 {
-    working_t ret = a_A + a_B;
-
-    working_t correction = abs(a_A) * abs(a_B);
-    if (a_A > 0.0 && a_B > 0.0)
+    static working_t correction = abs(o_A) * abs(a_B);
+    if (o_A > 0.0 && a_B > 0.0)
     {
-        ret -= correction;
+        o_A += a_B;
+        o_A -= correction;
     }
-    else if (a_A < 0.0 && a_B < 0.0)
+    else if (o_A < 0.0 && a_B < 0.0)
     {
-        ret += correction;
+        o_A += a_B;
+        o_A += correction;
     }
-
-    return ret;
+    else
+    {
+        o_A += a_B;
+    }
 }
 
-SB::SB(Quartz& a_Q, uint32_t a_channels_in, uint32_t a_channels_out)
+SB::SB(Quartz& a_Q, uint32_t a_channels_out)
 : m_Q(a_Q)
 , m_Device(Open(this, a_channels_out))
 , m_Start(1)
-, m_buffer(m_Have.samples * m_Have.channels)
+, m_buffer(s_chunk * m_Have.channels)
 , m_ready(false)
 , m_Power(true)
 , m_Thread(&SB::Mix, this)
@@ -113,20 +115,22 @@ uint32_t SB::SForF(double a_Frames)
     return a_Frames * ((double)m_Have.freq / (double)m_Q.m_FPS);
 }
 
-uint32_t SB::CreateSound(uint32_t a_CacheSamples, std::function<void(uint32_t, uint32_t, working_t*)> a_Func)
+uint32_t
+SB::CreateSound(uint32_t a_samples, uint32_t a_channels,
+    std::function<void(uint32_t, uint32_t, std::vector<std::array<working_t, s_chunk>>&, size_t)> a_func)
 {
-    auto& sound = m_Sounds.emplace_back();
+    auto& sound = m_Sounds.emplace_back(a_channels);
 
     uint32_t so_far = 0;
-    while (so_far < a_CacheSamples)
+    while (so_far < a_samples)
     {
-        auto& data = sound.emplace_back(m_Have.samples * m_Have.channels);
+        auto& data = sound.extend();
 
-        for(uint32_t t = 0; t < m_Have.samples; ++t)
+        for (uint32_t t = 0; t < s_chunk; ++t)
         {
-            if (so_far < a_CacheSamples)
+            if (so_far < a_samples)
             {
-                a_Func(so_far, a_CacheSamples, &data[t * m_Have.channels]);
+                a_func(so_far, a_samples, data, t);
                 ++so_far;
             }
         }
@@ -139,10 +143,11 @@ void SB::PlaySound(uint32_t a_Key)
 {
     std::unique_lock<std::mutex> lk(m_QueueMutex);
 
-    m_ToQueue.emplace_back(a_Key);
+    if (m_ToQueue.size() < 3)
+        m_ToQueue.emplace_back(a_Key);
 }
 
-uint8_t SB::AddSource(std::function<void(working_t*)> a_func)
+uint8_t SB::AddSource(std::function<void(working_t*, size_t)> a_func)
 {
     if (! m_Available.empty())
     {
@@ -176,22 +181,45 @@ void SB::RemoveSource(uint8_t a_key)
 
 void SB::Mix()
 {
+    std::vector<working_t> work_buffer;
+    work_buffer.resize(s_chunk * m_Have.channels);
+
     while (m_Power.load())
     {
         std::unique_lock<std::mutex> wlk(m_write_mutex);
 
         if (!m_ready)
         {
-            std::list<std::vector<working_t>*> all_sounds;
-
             std::unique_lock<std::mutex> qlk(m_QueueMutex);
+
+            std::fill(work_buffer.begin(), work_buffer.end(), 0.0);
+
             auto it = m_ToQueue.begin();
             while (it != m_ToQueue.end())
             {
-                auto& sound = m_Sounds[it->key];
-                all_sounds.push_back(&sound[it->progress++]);
+                const auto& sound = m_Sounds[it->key];
+                const auto& chunk = sound.data[it->progress++];
 
-                if (it->progress == sound.size())
+                uint32_t channel = 0;
+                uint32_t in_channel = 0;
+                uint32_t out_channel = 0;
+                while (true)
+                {
+                    in_channel = channel < sound.channels ? channel : in_channel;
+                    out_channel = channel < m_Have.channels ? channel : out_channel;
+
+                    for (uint32_t i = 0; i < s_chunk; ++i)
+                    {
+                        combine(work_buffer[i * m_Have.channels + out_channel], chunk[in_channel][i] * it->scale);
+                    }
+
+                    ++channel;
+
+                    if (channel >= sound.channels && channel >= m_Have.channels)
+                        break;
+                }
+
+                if (it->progress == sound.data.size())
                 {
                     it = m_ToQueue.erase(it);
                 }
@@ -202,30 +230,14 @@ void SB::Mix()
             }
             qlk.unlock();
 
-            for (uint32_t i = 0; i < m_buffer.size(); i += 2)
+            for (auto& src : m_Sources)
             {
-                uint32_t lefti = i;
-                uint32_t righti = i + 1;
+                src.second(work_buffer.data(), work_buffer.size());
+            }
 
-                working_t left = 0;
-                working_t right = 0;
-
-                for (auto s : all_sounds)
-                {
-                    left = combine(left, (*s)[lefti]);
-                    right = combine(right, (*s)[righti]);
-                }
-
-                for (auto& src : m_Sources)
-                {
-                    working_t out[2];
-                    src.second(out);
-                    left = combine(left, out[0]);
-                    right = combine(right, out[1]);
-                }
-
-                m_buffer[lefti] = as_output(left);
-                m_buffer[righti] = as_output(right);
+            for (uint32_t i = 0; i < m_buffer.size(); ++i)
+            {
+                m_buffer[i] = as_output(work_buffer[i]);
             }
 
             m_ready = true;
