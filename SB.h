@@ -39,7 +39,9 @@ struct SB
 
     uint32_t SForF(double);
 
-    uint32_t CreateSound(uint32_t a_samples, uint32_t a_channels, std::function<void(uint32_t, uint32_t, std::vector<std::array<working_t, s_chunk>>&, size_t)> a_func);
+    uint32_t CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&)> a_func);
+
+    uint32_t CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&, working_t&)> a_func);
 
     void PlaySound(uint32_t a_Key);
 

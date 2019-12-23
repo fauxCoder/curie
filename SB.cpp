@@ -115,11 +115,9 @@ uint32_t SB::SForF(double a_Frames)
     return a_Frames * ((double)m_Have.freq / (double)m_Q.m_FPS);
 }
 
-uint32_t
-SB::CreateSound(uint32_t a_samples, uint32_t a_channels,
-    std::function<void(uint32_t, uint32_t, std::vector<std::array<working_t, s_chunk>>&, size_t)> a_func)
+uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&)> a_func)
 {
-    auto& sound = m_Sounds.emplace_back(a_channels);
+    auto& sound = m_Sounds.emplace_back(1);
 
     uint32_t so_far = 0;
     while (so_far < a_samples)
@@ -130,7 +128,29 @@ SB::CreateSound(uint32_t a_samples, uint32_t a_channels,
         {
             if (so_far < a_samples)
             {
-                a_func(so_far, a_samples, data, t);
+                a_func(so_far, a_samples, data[0][t]);
+                ++so_far;
+            }
+        }
+    }
+
+    return m_Sounds.size() - 1;
+}
+
+uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&, working_t&)> a_func)
+{
+    auto& sound = m_Sounds.emplace_back(2);
+
+    uint32_t so_far = 0;
+    while (so_far < a_samples)
+    {
+        auto& data = sound.extend();
+
+        for (uint32_t t = 0; t < s_chunk; ++t)
+        {
+            if (so_far < a_samples)
+            {
+                a_func(so_far, a_samples, data[0][t], data[1][t]);
                 ++so_far;
             }
         }
