@@ -4,8 +4,45 @@
 #include <cmath>
 #include <cstdint>
 
+struct Wave
+{
+    uint32_t offset = 0;
+    double divisor;
+    double pending_divisor;
+
+    double last = 0.0;
+
+    Wave(double a_divisor = 1.0)
+    : divisor(a_divisor)
+    , pending_divisor(a_divisor)
+    {
+    }
+
+    double operator()(uint32_t t)
+    {
+        double ret = std::sin(static_cast<double>(t - offset) / divisor);
+
+        if (pending_divisor != divisor)
+        {
+            if (last == 0.0 || (ret > 0.0 && last < 0.0) || (ret < 0.0 && last > 0.0))
+            {
+                offset = t;
+                divisor = pending_divisor;
+
+                ret = std::sin(static_cast<double>(t - offset) / divisor);
+            }
+        }
+
+        return ret;
+    }
+};
+
 struct SH
 {
+    const uint32_t t;
+    const uint32_t len;
+    double data;
+
     SH(uint32_t a_t, uint32_t a_len, double a_data = 0.0)
     : t(a_t)
     , len(a_len)
@@ -13,28 +50,21 @@ struct SH
     {
     }
 
-    SH& Sin(double f)
+    SH& wave(Wave& w)
     {
-        data += std::sin((double)(t / f));
+        data += w(t);
 
         return *this;
     }
 
-    SH& Saw(double f)
-    {
-        data += t * f;
-
-        return *this;
-    }
-
-    SH& Scale(double s)
+    SH& scale(double s)
     {
         data *= s;
 
         return *this;
     }
 
-    SH& Cut(double c)
+    SH& cut(double c)
     {
         if (data > c)
         {
@@ -48,7 +78,7 @@ struct SH
         return *this;
     }
 
-    SH& Envelope(uint32_t atk, uint32_t dcy, double sst, uint32_t rel)
+    SH& envelope(uint32_t atk, uint32_t dcy, double sst, uint32_t rel)
     {
         double scale = 1.0;
 
@@ -79,12 +109,8 @@ struct SH
         return *this;
     }
 
-    double Done()
+    double operator()()
     {
         return data;
     }
-
-    const uint32_t t;
-    const uint32_t len;
-    double data;
 };
