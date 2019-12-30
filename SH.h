@@ -6,31 +6,37 @@
 
 struct Wave
 {
-    uint32_t offset = 0;
-    double divisor;
-    double pending_divisor;
+    static const uint32_t frame_fraction = 32;
 
-    double last = 0.0;
+    uint32_t cycle;
+    uint32_t progress;
 
-    Wave(double a_divisor = 1.0)
-    : divisor(a_divisor)
-    , pending_divisor(a_divisor)
+    uint32_t pending_cycle;
+
+    Wave(uint32_t a_cycle = frame_fraction)
+    : cycle(a_cycle)
+    , progress(0)
+    , pending_cycle(a_cycle)
     {
     }
 
     double operator()(uint32_t t)
     {
-        double ret = std::sin(static_cast<double>(t - offset) / divisor);
+        static const double two_pi = std::acos(-1) * 2;
 
-        if (pending_divisor != divisor)
+        double ret = 0;
+
+        if (cycle > frame_fraction * 2)
         {
-            if (last == 0.0 || (ret > 0.0 && last < 0.0) || (ret < 0.0 && last > 0.0))
-            {
-                offset = t;
-                divisor = pending_divisor;
+            ret = std::sin(two_pi * static_cast<double>(progress) / static_cast<double>(cycle));
+        }
 
-                ret = std::sin(static_cast<double>(t - offset) / divisor);
-            }
+        progress += frame_fraction;
+        while (progress > cycle)
+        {
+            progress -= cycle;
+
+            cycle = pending_cycle;
         }
 
         return ret;
