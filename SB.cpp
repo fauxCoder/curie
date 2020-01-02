@@ -5,63 +5,6 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
-#include <iostream>
-
-SDL_AudioDeviceID SB::Open(SB* a_SB, uint32_t a_channels)
-{
-    SDL_AudioSpec want;
-    memset(&want, 0, sizeof(want));
-    want.freq = 44100;
-    want.format = AUDIO_S16SYS;
-    want.channels = a_channels;
-    want.samples = 2048;
-    want.callback = &Write;
-    want.userdata = static_cast<void*>(a_SB);
-
-    SDL_AudioDeviceID device = SDL_OpenAudioDevice(nullptr, 0, &want, &a_SB->m_Have, SDL_AUDIO_ALLOW_ANY_CHANGE);
-
-    assert(want.freq == a_SB->m_Have.freq);
-    assert(want.format == a_SB->m_Have.format);
-    assert(want.channels == a_SB->m_Have.channels);
-
-    SDL_PauseAudioDevice(device, 0);
-
-    return device;
-}
-
-void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
-{
-    SB* sb = static_cast<SB*>(a_SB);
-
-    assert(a_Length > 0);
-    size_t togo = a_Length;
-
-    while (togo > 0)
-    {
-        std::unique_lock<std::mutex> lk(sb->m_write_mutex);
-        if (sb->m_ready)
-        {
-            size_t s = std::min(togo, sb->m_buffer.size()) * sizeof(output_t);
-            memcpy(a_Stream, sb->m_buffer.data(), s);
-            sb->m_ready = false;
-
-            a_Stream += s;
-            togo -= s;
-        }
-        else
-        {
-            lk.unlock();
-            std::this_thread::yield();
-        }
-    }
-
-    assert(togo == 0);
-}
-
-void SB::Close(SDL_AudioDeviceID a_Device)
-{
-    SDL_CloseAudioDevice(a_Device);
-}
 
 SB::working_t SB::as_working(output_t a_S)
 {
@@ -94,10 +37,9 @@ void SB::combine(working_t& o_A, working_t a_B)
 
 SB::SB(Quartz& a_Q, uint32_t a_channels_out)
 : m_Q(a_Q)
-, m_Device(Open(this, a_channels_out))
+, m_channels_out(a_channels_out)
+, m_stream(nullptr)
 , m_Start(1)
-, m_buffer(m_Have.samples * m_Have.channels)
-, m_ready(false)
 , m_Power(true)
 , m_Thread(&SB::Mix, this)
 {
@@ -105,8 +47,6 @@ SB::SB(Quartz& a_Q, uint32_t a_channels_out)
 
 SB::~SB()
 {
-    Close(m_Device);
-
     m_Power.store(false);
 
     m_Thread.join();
@@ -114,7 +54,7 @@ SB::~SB()
 
 uint32_t SB::SForF(double a_Frames)
 {
-    return a_Frames * ((double)m_Have.freq / (double)m_Q.m_FPS);
+    return a_Frames * (44100.0 / (double)m_Q.m_FPS);
 }
 
 uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&)> a_func)
@@ -124,9 +64,9 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
     uint32_t so_far = 0;
     while (so_far < a_samples)
     {
-        auto& data = sound.extend(m_Have.samples);
+        auto& data = sound.extend(s_chunk);
 
-        for (uint32_t t = 0; t < m_Have.samples; ++t)
+        for (uint32_t t = 0; t < s_chunk; ++t)
         {
             if (so_far < a_samples)
             {
@@ -146,9 +86,9 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
     uint32_t so_far = 0;
     while (so_far < a_samples)
     {
-        auto& data = sound.extend(m_Have.samples);
+        auto& data = sound.extend(s_chunk);
 
-        for (uint32_t t = 0; t < m_Have.samples; ++t)
+        for (uint32_t t = 0; t < s_chunk; ++t)
         {
             if (so_far < a_samples)
             {
@@ -203,71 +143,87 @@ void SB::RemoveSource(uint8_t a_key)
 
 void SB::Mix()
 {
+    auto error = Pa_Initialize();
+    assert(error == paNoError);
+
+    PaStreamParameters output;
+    output.device = Pa_GetDefaultOutputDevice();
+    output.channelCount = m_channels_out;
+    output.sampleFormat = paInt16;
+    output.suggestedLatency = Pa_GetDeviceInfo(output.device)->defaultLowOutputLatency;
+    error = Pa_OpenStream(&m_stream, nullptr, &output, 44100.0, s_chunk, paNoFlag, nullptr, nullptr);
+    assert(error == paNoError);
+
+    error = Pa_StartStream(m_stream);
+    assert(error == paNoError);
+
     std::vector<working_t> work_buffer;
-    work_buffer.resize(m_Have.samples * m_Have.channels);
+    work_buffer.resize(s_chunk * output.channelCount);
+
+    std::vector<output_t> out_buffer;
+    out_buffer.resize(s_chunk * output.channelCount);
 
     while (m_Power.load())
     {
-        std::unique_lock<std::mutex> wlk(m_write_mutex);
+        std::fill(work_buffer.begin(), work_buffer.end(), 0.0);
 
-        if (!m_ready)
+        std::unique_lock<std::mutex> qlk(m_QueueMutex);
+
+        auto it = m_ToQueue.begin();
+        while (it != m_ToQueue.end())
         {
-            std::unique_lock<std::mutex> qlk(m_QueueMutex);
+            const auto& sound = m_Sounds[it->key];
+            const auto& chunk = sound.data[it->progress++];
 
-            std::fill(work_buffer.begin(), work_buffer.end(), 0.0);
-
-            auto it = m_ToQueue.begin();
-            while (it != m_ToQueue.end())
+            uint32_t channel = 0;
+            uint32_t in_channel = 0;
+            uint32_t out_channel = 0;
+            while (true)
             {
-                const auto& sound = m_Sounds[it->key];
-                const auto& chunk = sound.data[it->progress++];
+                in_channel = channel < sound.channels ? channel : in_channel;
+                out_channel = channel < output.channelCount ? channel : out_channel;
 
-                uint32_t channel = 0;
-                uint32_t in_channel = 0;
-                uint32_t out_channel = 0;
-                while (true)
+                for (uint32_t i = 0; i < s_chunk; ++i)
                 {
-                    in_channel = channel < sound.channels ? channel : in_channel;
-                    out_channel = channel < m_Have.channels ? channel : out_channel;
-
-                    for (uint32_t i = 0; i < m_Have.samples; ++i)
-                    {
-                        combine(work_buffer[i * m_Have.channels + out_channel], chunk[in_channel][i] * it->scale);
-                    }
-
-                    ++channel;
-
-                    if (channel >= sound.channels && channel >= m_Have.channels)
-                        break;
+                    combine(work_buffer[i * output.channelCount + out_channel], chunk[in_channel][i] * it->scale);
                 }
 
-                if (it->progress == sound.data.size())
-                {
-                    it = m_ToQueue.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
-            qlk.unlock();
+                ++channel;
 
-            for (auto& src : m_Sources)
+                if (channel >= sound.channels && channel >= output.channelCount)
+                    break;
+            }
+
+            if (it->progress == sound.data.size())
             {
-                src.second(work_buffer.data(), work_buffer.size());
+                it = m_ToQueue.erase(it);
             }
-
-            for (uint32_t i = 0; i < m_buffer.size(); ++i)
+            else
             {
-                m_buffer[i] = as_output(work_buffer[i]);
+                ++it;
             }
+        }
+        qlk.unlock();
 
-            m_ready = true;
+        for (auto& src : m_Sources)
+        {
+            src.second(work_buffer.data(), work_buffer.size());
         }
 
-        wlk.unlock();
-        std::this_thread::yield();
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(1ms);
+        for (uint32_t i = 0; i < out_buffer.size(); ++i)
+        {
+            out_buffer[i] = as_output(work_buffer[i]);
+        }
+
+        error = Pa_WriteStream(m_stream, out_buffer.data(), s_chunk);
     }
+
+    error = Pa_StopStream(m_stream);
+    assert(error == paNoError);
+
+    error = Pa_CloseStream(m_stream);
+    assert(error == paNoError);
+
+    error = Pa_Terminate();
+    assert(error == paNoError);
 }

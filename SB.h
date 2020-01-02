@@ -2,7 +2,7 @@
 
 #include <Curie/Cog.h>
 
-#include <SDL2/SDL.h>
+#include <portaudio.h>
 
 #include <atomic>
 #include <deque>
@@ -20,11 +20,7 @@ struct SB
     typedef float working_t;
     typedef int16_t output_t;
 
-    static SDL_AudioDeviceID Open(SB*, uint32_t a_channels);
-
-    static void Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length);
-
-    static void Close(SDL_AudioDeviceID);
+    static const size_t s_chunk = 2048;
 
     static working_t as_working(output_t);
     static output_t as_output(working_t);
@@ -51,8 +47,9 @@ struct SB
 
     Quartz& m_Q;
 
-    SDL_AudioDeviceID m_Device;
-    SDL_AudioSpec m_Have;
+    uint32_t m_channels_out;
+
+    PaStream* m_stream;
 
     struct Sound
     {
@@ -61,13 +58,12 @@ struct SB
         {
         }
 
-        std::vector<std::vector<working_t>>& extend(size_t chunk)
+        std::vector<std::array<working_t, s_chunk>>& extend(size_t chunk)
         {
             auto& ret = data.emplace_back(channels);
 
             for (auto& c : ret)
             {
-                c.resize(chunk);
                 std::fill(c.begin(), c.end(), 0.0);
             }
 
@@ -75,7 +71,7 @@ struct SB
         }
 
         uint32_t channels;
-        std::vector<std::vector<std::vector<working_t>>> data;
+        std::vector<std::vector<std::array<working_t, s_chunk>>> data;
     };
     std::vector<Sound> m_Sounds;
 
@@ -98,10 +94,6 @@ struct SB
     uint8_t m_Start;
     std::map<uint8_t, std::function<void(working_t*, size_t)>> m_Sources;
     std::list<uint8_t> m_Available;
-
-    std::mutex m_write_mutex;
-    std::vector<output_t> m_buffer;
-    bool m_ready;
 
     std::atomic<bool> m_Power;
     std::thread m_Thread;
