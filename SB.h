@@ -20,8 +20,6 @@ struct SB
     typedef float working_t;
     typedef int16_t output_t;
 
-    static const size_t s_chunk = 2048;
-
     static SDL_AudioDeviceID Open(SB*, uint32_t a_channels);
 
     static void Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length);
@@ -63,20 +61,21 @@ struct SB
         {
         }
 
-        std::vector<std::array<working_t, s_chunk>>& extend()
+        std::vector<std::vector<working_t>>& extend(size_t chunk)
         {
             auto& ret = data.emplace_back(channels);
 
             for (auto& c : ret)
             {
-                c.fill(0.0);
+                c.resize(chunk);
+                std::fill(c.begin(), c.end(), 0.0);
             }
 
             return ret;
         }
 
         uint32_t channels;
-        std::vector<std::vector<std::array<working_t, s_chunk>>> data;
+        std::vector<std::vector<std::vector<working_t>>> data;
     };
     std::vector<Sound> m_Sounds;
 

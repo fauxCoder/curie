@@ -2,6 +2,7 @@
 
 #include <Curie/Quartz.h>
 
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <iostream>
@@ -13,7 +14,7 @@ SDL_AudioDeviceID SB::Open(SB* a_SB, uint32_t a_channels)
     want.freq = 44100;
     want.format = AUDIO_S16SYS;
     want.channels = a_channels;
-    want.samples = 4096;
+    want.samples = 2048;
     want.callback = &Write;
     want.userdata = static_cast<void*>(a_SB);
 
@@ -32,14 +33,15 @@ void SB::Write(void* a_SB, uint8_t* a_Stream, int32_t a_Length)
 {
     SB* sb = static_cast<SB*>(a_SB);
 
-    int32_t togo = a_Length;
+    assert(a_Length > 0);
+    size_t togo = a_Length;
 
     while (togo > 0)
     {
         std::unique_lock<std::mutex> lk(sb->m_write_mutex);
         if (sb->m_ready)
         {
-            size_t s = sb->m_buffer.size() * sizeof(output_t);
+            size_t s = std::min(togo, sb->m_buffer.size()) * sizeof(output_t);
             memcpy(a_Stream, sb->m_buffer.data(), s);
             sb->m_ready = false;
 
@@ -94,7 +96,7 @@ SB::SB(Quartz& a_Q, uint32_t a_channels_out)
 : m_Q(a_Q)
 , m_Device(Open(this, a_channels_out))
 , m_Start(1)
-, m_buffer(s_chunk * m_Have.channels)
+, m_buffer(m_Have.samples * m_Have.channels)
 , m_ready(false)
 , m_Power(true)
 , m_Thread(&SB::Mix, this)
@@ -122,9 +124,9 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
     uint32_t so_far = 0;
     while (so_far < a_samples)
     {
-        auto& data = sound.extend();
+        auto& data = sound.extend(m_Have.samples);
 
-        for (uint32_t t = 0; t < s_chunk; ++t)
+        for (uint32_t t = 0; t < m_Have.samples; ++t)
         {
             if (so_far < a_samples)
             {
@@ -144,9 +146,9 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
     uint32_t so_far = 0;
     while (so_far < a_samples)
     {
-        auto& data = sound.extend();
+        auto& data = sound.extend(m_Have.samples);
 
-        for (uint32_t t = 0; t < s_chunk; ++t)
+        for (uint32_t t = 0; t < m_Have.samples; ++t)
         {
             if (so_far < a_samples)
             {
@@ -202,7 +204,7 @@ void SB::RemoveSource(uint8_t a_key)
 void SB::Mix()
 {
     std::vector<working_t> work_buffer;
-    work_buffer.resize(s_chunk * m_Have.channels);
+    work_buffer.resize(m_Have.samples * m_Have.channels);
 
     while (m_Power.load())
     {
@@ -228,7 +230,7 @@ void SB::Mix()
                     in_channel = channel < sound.channels ? channel : in_channel;
                     out_channel = channel < m_Have.channels ? channel : out_channel;
 
-                    for (uint32_t i = 0; i < s_chunk; ++i)
+                    for (uint32_t i = 0; i < m_Have.samples; ++i)
                     {
                         combine(work_buffer[i * m_Have.channels + out_channel], chunk[in_channel][i] * it->scale);
                     }
