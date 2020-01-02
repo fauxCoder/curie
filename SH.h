@@ -4,20 +4,27 @@
 #include <cmath>
 #include <cstdint>
 
+#include <iostream>
+
 struct Wave
 {
-    static const uint32_t frame_fraction = 32;
+    static const uint32_t per_sec = 44100;
+    static const uint32_t frame_fraction = 1024;
 
-    uint32_t cycle;
     uint32_t progress;
-
+    uint32_t cycle;
     uint32_t pending_cycle;
 
-    Wave(uint32_t a_cycle = frame_fraction)
-    : cycle(a_cycle)
-    , progress(0)
-    , pending_cycle(a_cycle)
+    Wave()
+    : progress(0)
+    , cycle(frame_fraction)
+    , pending_cycle(frame_fraction)
     {
+    }
+
+    void tune(double freq)
+    {
+        pending_cycle = std::max(1.0, static_cast<double>(per_sec) / freq * static_cast<double>(frame_fraction));
     }
 
     double operator()(uint32_t t)
@@ -35,7 +42,6 @@ struct Wave
         while (progress > cycle)
         {
             progress -= cycle;
-
             cycle = pending_cycle;
         }
 
