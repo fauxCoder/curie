@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Curie/SB.h>
+
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -8,7 +10,6 @@
 
 struct Wave
 {
-    static const uint32_t per_sec = 44100;
     static const uint32_t frame_fraction = 1024;
 
     uint32_t progress;
@@ -24,7 +25,7 @@ struct Wave
 
     void tune(double freq)
     {
-        pending_cycle = std::max(1.0, static_cast<double>(per_sec) / freq * static_cast<double>(frame_fraction));
+        pending_cycle = std::max(1.0, SB::s_rate / freq * static_cast<double>(frame_fraction));
     }
 
     double operator()(uint32_t t)
@@ -39,9 +40,15 @@ struct Wave
         }
 
         progress += frame_fraction;
-        while (progress > cycle)
+
+        if (progress > cycle)
         {
             progress -= cycle;
+        }
+
+        if (cycle != pending_cycle)
+        {
+            progress = static_cast<double>(progress) / static_cast<double>(cycle) * static_cast<double>(pending_cycle);
             cycle = pending_cycle;
         }
 

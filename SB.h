@@ -20,6 +20,7 @@ struct SB
     typedef float working_t;
     typedef int16_t output_t;
 
+    static constexpr double s_rate = 44100.0;
     static const size_t s_chunk = 2048;
 
     static working_t as_working(output_t);
@@ -75,7 +76,9 @@ struct SB
     };
     std::vector<Sound> m_Sounds;
 
-    std::mutex m_QueueMutex;
+    std::set<uint32_t> m_queue;
+    std::mutex m_queue_mutex;
+
     struct Prog
     {
         Prog(uint32_t a_key, working_t a_scale = 1.0)
@@ -89,7 +92,7 @@ struct SB
         uint32_t progress;
         working_t scale;
     };
-    std::list<Prog> m_ToQueue;
+    std::list<Prog> m_playing;
 
     uint8_t m_Start;
     std::map<uint8_t, std::function<void(working_t*, size_t)>> m_Sources;

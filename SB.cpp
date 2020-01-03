@@ -54,7 +54,7 @@ SB::~SB()
 
 uint32_t SB::SForF(double a_Frames)
 {
-    return a_Frames * (44100.0 / (double)m_Q.m_FPS);
+    return a_Frames * (s_rate / (double)m_Q.m_FPS);
 }
 
 uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&)> a_func)
@@ -101,12 +101,11 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
     return m_Sounds.size() - 1;
 }
 
-void SB::PlaySound(uint32_t a_Key)
+void SB::PlaySound(uint32_t a_key)
 {
-    std::unique_lock<std::mutex> lk(m_QueueMutex);
+    std::unique_lock<std::mutex> lk(m_queue_mutex);
 
-    if (m_ToQueue.size() < 3)
-        m_ToQueue.emplace_back(a_Key);
+    m_queue.insert(a_key);
 }
 
 uint8_t SB::AddSource(std::function<void(working_t*, size_t)> a_func)
@@ -151,7 +150,8 @@ void SB::Mix()
     output.channelCount = m_channels_out;
     output.sampleFormat = paInt16;
     output.suggestedLatency = Pa_GetDeviceInfo(output.device)->defaultLowOutputLatency;
-    error = Pa_OpenStream(&m_stream, nullptr, &output, 44100.0, s_chunk, paNoFlag, nullptr, nullptr);
+    output.hostApiSpecificStreamInfo = nullptr;
+    error = Pa_OpenStream(&m_stream, nullptr, &output, s_rate, s_chunk, paNoFlag, nullptr, nullptr);
     assert(error == paNoError);
 
     error = Pa_StartStream(m_stream);
@@ -167,10 +167,20 @@ void SB::Mix()
     {
         std::fill(work_buffer.begin(), work_buffer.end(), 0.0);
 
-        std::unique_lock<std::mutex> qlk(m_QueueMutex);
+        if (m_queue_mutex.try_lock())
+        {
+            for (auto key : m_queue)
+            {
+                m_playing.emplace_back(key);
+            }
 
-        auto it = m_ToQueue.begin();
-        while (it != m_ToQueue.end())
+            m_queue.clear();
+
+            m_queue_mutex.unlock();
+        }
+
+        auto it = m_playing.begin();
+        while (it != m_playing.end())
         {
             const auto& sound = m_Sounds[it->key];
             const auto& chunk = sound.data[it->progress++];
@@ -196,14 +206,13 @@ void SB::Mix()
 
             if (it->progress == sound.data.size())
             {
-                it = m_ToQueue.erase(it);
+                it = m_playing.erase(it);
             }
             else
             {
                 ++it;
             }
         }
-        qlk.unlock();
 
         for (auto& src : m_Sources)
         {
