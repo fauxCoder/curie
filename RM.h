@@ -16,14 +16,21 @@ struct Quartz;
 
 struct Image
 {
-    Image(SDL_Texture* a_Texture, int32_t a_W, int32_t a_H)
-        : Texture(a_Texture)
-        , W(a_W)
-        , H(a_H)
+    Image(SDL_Surface* a_surface, int32_t a_W, int32_t a_H)
+    : surface(a_surface)
+    , texture(nullptr)
+    , W(a_W)
+    , H(a_H)
     {
     }
 
-    SDL_Texture* Texture;
+    void create_texture(SDL_Renderer* a_renderer)
+    {
+        texture = SDL_CreateTextureFromSurface(a_renderer, surface);
+    }
+
+    SDL_Surface* surface;
+    SDL_Texture* texture;
     int32_t W;
     int32_t H;
 };
@@ -71,6 +78,14 @@ struct RM
 
     ~RM();
 
+    void init_t();
+
+    void init_q();
+
+    void switch_t();
+
+    void see_q();
+
     uint32_t AddImage(std::string a_Image);
 
     Image* GetImage(uint32_t a_Key);
@@ -79,17 +94,13 @@ struct RM
 
     void Remove(Entry a_Entry);
 
-    void Switch();
-
-    void See();
-
     void Copy(uint32_t a_Key, SDL_Rect& a_Rect);
 
     void Copy(Image* a_Image, SDL_Rect& a_Rect);
 
     Quartz& m_Q;
     SDL_Window& m_Window;
-    SDL_Renderer* m_Renderer;
+    SDL_Renderer* m_renderer;
 
     std::vector<std::unique_ptr<Image>> m_Images;
 

@@ -1,3 +1,6 @@
+#include <Card.h>
+#include <Poker.h>
+
 #include <Curie/Quartz.h>
 #include <Curie/RM.h>
 
@@ -11,7 +14,7 @@ uint32_t RM::s_ScreenHeight = 480;
 
 SDL_Window* RM::CreateWindow()
 {
-    SDL_Window* window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN /*SDL_WINDOW_FULLSCREEN*/);
+    SDL_Window* window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
     assert(window);
 
     SDL_ShowCursor(SDL_DISABLE);
@@ -27,18 +30,22 @@ void RM::Destroy(SDL_Window* a_Window)
 RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Q(a_Q)
 , m_Window(a_Window)
-, m_Renderer(SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC))
+, m_renderer(nullptr)
 , m_Redraw(false)
-, m_Cog(a_Q, std::bind(&RM::Switch, this), std::bind(&RM::See, this))
+, m_Cog(a_Q,
+    std::bind(&RM::init_t, this),
+    std::bind(&RM::init_q, this),
+    std::bind(&RM::switch_t, this),
+    std::bind(&RM::see_q, this))
 {
     IMG_Init(IMG_INIT_PNG);
 
-    m_Cog.m_Engaged.store(true);
+    m_Cog.m_engaged.store(true);
 }
 
 RM::~RM()
 {
-    m_Cog.m_Engaged.store(false);
+    m_Cog.m_engaged.store(false);
 }
 
 uint32_t RM::AddImage(std::string a_Image)
@@ -51,7 +58,7 @@ uint32_t RM::AddImage(std::string a_Image)
     }
     else
     {
-        m_Images.emplace_back(new Image(SDL_CreateTextureFromSurface(m_Renderer, loadedSurface), loadedSurface->w, loadedSurface->h));
+        m_Images.emplace_back(new Image(loadedSurface, loadedSurface->w, loadedSurface->h));
         return m_Images.size() - 1;
     }
 }
@@ -91,7 +98,24 @@ void RM::Remove(Entry a_Entry)
     m_Redraw.store(true);
 }
 
-void RM::Switch()
+void RM::init_t()
+{
+}
+
+void RM::init_q()
+{
+    m_renderer = SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    for (auto& image : m_Images)
+    {
+        if (image->texture == nullptr)
+        {
+            image->create_texture(m_renderer);
+        }
+    }
+}
+
+void RM::switch_t()
 {
     bool switched = m_Redraw.load();
 
@@ -107,15 +131,15 @@ void RM::Switch()
     m_Redraw.store(switched);
 }
 
-void RM::See()
+void RM::see_q()
 {
     if ( ! m_Redraw.load())
         return;
 
     m_Redraw.store(false);
 
-    SDL_SetRenderDrawColor(m_Renderer, 0x22, 0x22, 0x22, 0xFF);
-    SDL_RenderClear(m_Renderer);
+    SDL_SetRenderDrawColor(m_renderer, 0x22, 0x22, 0x22, 0xFF);
+    SDL_RenderClear(m_renderer);
 
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
@@ -136,7 +160,7 @@ void RM::See()
         }
     }
 
-    SDL_RenderPresent(m_Renderer);
+    SDL_RenderPresent(m_renderer);
 }
 
 void RM::Copy(uint32_t a_Key, SDL_Rect& a_Rect)
@@ -152,5 +176,5 @@ void RM::Copy(Image* a_Image, SDL_Rect& a_Rect)
 {
     a_Rect.w *= a_Image->W;
     a_Rect.h *= a_Image->H;
-    SDL_RenderCopy(m_Renderer, (a_Image->Texture), nullptr, &a_Rect);
+    SDL_RenderCopy(m_renderer, (a_Image->texture), nullptr, &a_Rect);
 }

@@ -8,7 +8,7 @@ Quartz::Quartz(uint32_t a_FPS)
 , m_FrameLength(1000 / a_FPS)
 , m_Power(true)
 , m_ToothTokens(0)
-, m_Thread(&Quartz::Resonate, this)
+, m_thread(&Quartz::resonate, this)
 {
 }
 
@@ -18,10 +18,10 @@ Quartz::~Quartz()
 
     m_Monitor.notify_all();
 
-    m_Thread.join();
+    m_thread.join();
 }
 
-void Quartz::Resonate()
+void Quartz::resonate()
 {
     while (m_Power.load())
     {
@@ -51,12 +51,20 @@ void Quartz::Resonate()
         }
 
         {
-            std::unique_lock<std::mutex> lk(m_CogsMutex);
+            std::unique_lock<std::mutex> lk(m_cogs_mutex);
 
-            for (auto c : m_Cogs)
+            for (auto c : m_cogs)
             {
-                if (c->m_Engaged.load())
-                    c->m_Tooth();
+                if (c->m_engaged.load())
+                {
+                    if (c->m_fit == 1)
+                    {
+                        c->m_fit_q();
+                        c->m_fit = 2;
+                    }
+
+                    c->m_drive_q();
+                }
             }
         }
 
@@ -68,7 +76,7 @@ void Quartz::Resonate()
     }
 }
 
-void Quartz::Tooth()
+void Quartz::tooth()
 {
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
@@ -77,12 +85,20 @@ void Quartz::Tooth()
         });
 
         {
-            std::unique_lock<std::mutex> lk(m_CogsMutex);
+            std::unique_lock<std::mutex> lk(m_cogs_mutex);
 
-            for (auto c : m_Cogs)
+            for (auto c : m_cogs)
             {
-                if (c->m_Engaged.load())
-                    c->m_Contact();
+                if (c->m_engaged.load())
+                {
+                    if (c->m_fit == 0)
+                    {
+                        c->m_fit_t();
+                        c->m_fit = 1;
+                    }
+
+                    c->m_drive_t();
+                }
             }
         }
 
@@ -92,11 +108,11 @@ void Quartz::Tooth()
     m_Monitor.notify_one();
 }
 
-void Quartz::Teeth(uint32_t a_Moves)
+void Quartz::teeth(uint32_t a_Moves)
 {
     while (a_Moves > 0)
     {
-        Tooth();
+        tooth();
         --a_Moves;
     }
 }

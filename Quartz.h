@@ -19,13 +19,13 @@ struct Quartz
 
     ~Quartz();
 
-    void Resonate();
+    void resonate();
 
-    void Tooth();
+    void tooth();
 
-    void Teeth(uint32_t a_Moves);
+    void teeth(uint32_t a_Moves);
 
-    void Wait(uint32_t a_ms) { Teeth(a_ms / m_FrameLength.count()); }
+    void wait(uint32_t a_ms) { teeth(a_ms / m_FrameLength.count()); }
 
 public:
     const uint32_t m_FPS;
@@ -38,8 +38,8 @@ private:
     std::mutex m_Mutex;
     std::condition_variable m_Monitor;
 
-    std::mutex m_CogsMutex;
-    std::set<Cog*> m_Cogs;
+    std::mutex m_cogs_mutex;
+    std::set<Cog*> m_cogs;
 
-    std::thread m_Thread;
+    std::thread m_thread;
 };
