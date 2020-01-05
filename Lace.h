@@ -17,7 +17,7 @@ struct Lace
     {
         while (m_waited < m_length)
         {
-            m_Q.Tooth();
+            m_Q.tooth();
             ++m_waited;
         }
     }
@@ -31,7 +31,7 @@ struct Lace
 
             if (i % mod == 0)
             {
-                m_Q.Tooth();
+                m_Q.tooth();
                 ++m_waited;
                 return true;
             }
