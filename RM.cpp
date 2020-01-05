@@ -1,6 +1,3 @@
-#include <Card.h>
-#include <Poker.h>
-
 #include <Curie/Quartz.h>
 #include <Curie/RM.h>
 
