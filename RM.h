@@ -2,8 +2,7 @@
 
 #include <Curie/Cog.h>
 #include <Curie/CiCa.h>
-
-#include <SDL2/SDL.h>
+#include <Curie/VL.h>
 
 #include <atomic>
 #include <map>
@@ -13,27 +12,6 @@
 #include <string>
 
 struct Quartz;
-
-struct Image
-{
-    Image(SDL_Surface* a_surface, int32_t a_W, int32_t a_H)
-    : surface(a_surface)
-    , texture(nullptr)
-    , W(a_W)
-    , H(a_H)
-    {
-    }
-
-    void create_texture(SDL_Renderer* a_renderer)
-    {
-        texture = SDL_CreateTextureFromSurface(a_renderer, surface);
-    }
-
-    SDL_Surface* surface;
-    SDL_Texture* texture;
-    int32_t W;
-    int32_t H;
-};
 
 struct RM
 {
@@ -70,10 +48,6 @@ struct RM
     static uint32_t s_ScreenWidth;
     static uint32_t s_ScreenHeight;
 
-    static SDL_Window* CreateWindow();
-
-    static void Destroy(SDL_Window* a_Window);
-
     RM(Quartz& a_Q, SDL_Window& a_Window);
 
     ~RM();
@@ -88,7 +62,7 @@ struct RM
 
     uint32_t AddImage(std::string a_Image);
 
-    Image* GetImage(uint32_t a_Key);
+    VL::Image* GetImage(uint32_t a_Key);
 
     Entry Add(int64_t a_Priority = 0);
 
@@ -96,13 +70,13 @@ struct RM
 
     void Copy(uint32_t a_Key, SDL_Rect& a_Rect);
 
-    void Copy(Image* a_Image, SDL_Rect& a_Rect);
+    void Copy(VL::Image* a_Image, SDL_Rect& a_Rect);
 
     Quartz& m_Q;
     SDL_Window& m_Window;
     SDL_Renderer* m_renderer;
 
-    std::vector<std::unique_ptr<Image>> m_Images;
+    std::vector<std::unique_ptr<VL::Image>> m_Images;
 
     std::mutex m_Mutex;
     std::set<Entry> m_Entries;

@@ -18,7 +18,7 @@ SB::output_t SB::as_output(working_t a_S)
 
 void SB::combine(working_t& o_A, working_t a_B)
 {
-    static working_t correction = abs(o_A) * abs(a_B);
+    static working_t correction = std::abs(o_A) * std::abs(a_B);
     if (o_A > 0.0 && a_B > 0.0)
     {
         o_A += a_B;
@@ -142,6 +142,8 @@ void SB::RemoveSource(uint8_t a_key)
 
 void SB::Mix()
 {
+    return;
+
     auto error = Pa_Initialize();
     assert(error == paNoError);
 

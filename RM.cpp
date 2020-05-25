@@ -6,24 +6,6 @@
 #include <cassert>
 #include <iostream>
 
-uint32_t RM::s_ScreenWidth = 640;
-uint32_t RM::s_ScreenHeight = 480;
-
-SDL_Window* RM::CreateWindow()
-{
-    SDL_Window* window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
-    assert(window);
-
-    SDL_ShowCursor(SDL_DISABLE);
-
-    return window;
-}
-
-void RM::Destroy(SDL_Window* a_Window)
-{
-    SDL_DestroyWindow(a_Window);
-}
-
 RM::RM(Quartz& a_Q, SDL_Window& a_Window)
 : m_Q(a_Q)
 , m_Window(a_Window)
@@ -55,12 +37,12 @@ uint32_t RM::AddImage(std::string a_Image)
     }
     else
     {
-        m_Images.emplace_back(new Image(loadedSurface, loadedSurface->w, loadedSurface->h));
+        m_Images.emplace_back(new VL::Image(loadedSurface, loadedSurface->w, loadedSurface->h));
         return m_Images.size() - 1;
     }
 }
 
-Image* RM::GetImage(uint32_t a_Key)
+VL::Image* RM::GetImage(uint32_t a_Key)
 {
     if (a_Key < m_Images.size())
     {
@@ -169,7 +151,7 @@ void RM::Copy(uint32_t a_Key, SDL_Rect& a_Rect)
     }
 }
 
-void RM::Copy(Image* a_Image, SDL_Rect& a_Rect)
+void RM::Copy(VL::Image* a_Image, SDL_Rect& a_Rect)
 {
     a_Rect.w *= a_Image->W;
     a_Rect.h *= a_Image->H;

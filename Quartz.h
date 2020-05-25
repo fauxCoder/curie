@@ -1,7 +1,5 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -23,7 +21,7 @@ struct Quartz
 
     void tooth();
 
-    void teeth(uint32_t a_Moves);
+    void teeth(uint32_t);
 
     void wait(uint32_t a_ms) { teeth(a_ms / m_FrameLength.count()); }
 
