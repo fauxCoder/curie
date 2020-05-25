@@ -1,8 +1,6 @@
 #include <Curie/Quartz.h>
 #include <Curie/RM.h>
 
-#include <SDL2/SDL_image.h>
-
 #include <cassert>
 #include <iostream>
 
@@ -17,8 +15,6 @@ RM::RM(Quartz& a_Q, SDL_Window& a_Window)
     std::bind(&RM::switch_t, this),
     std::bind(&RM::see_q, this))
 {
-    IMG_Init(IMG_INIT_PNG);
-
     m_Cog.m_engaged.store(true);
 }
 
@@ -29,17 +25,8 @@ RM::~RM()
 
 uint32_t RM::AddImage(std::string a_Image)
 {
-    SDL_Surface* loadedSurface = IMG_Load(a_Image.c_str());
-    if (loadedSurface == nullptr)
-    {
-        printf("Unable to load image! SDL_image Error: %s\n", IMG_GetError());
-        return 0;
-    }
-    else
-    {
-        m_Images.emplace_back(new VL::Image(loadedSurface, loadedSurface->w, loadedSurface->h));
-        return m_Images.size() - 1;
-    }
+    m_Images.emplace_back(new VL::Image(a_Image));
+    return m_Images.size() - 1;
 }
 
 VL::Image* RM::GetImage(uint32_t a_Key)

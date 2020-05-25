@@ -1,39 +1,39 @@
 #include <Curie/VL.h>
 
-#include <SDL2/SDL.h>
-
 #include <cassert>
 
 namespace VL
 {
 
-system::system()
+System::System()
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         printf("SDL_Error: %s\n", SDL_GetError());
     }
+
+    IMG_Init(IMG_INIT_PNG);
 }
 
-system::~system()
+System::~System()
 {
     SDL_Quit();
 }
 
-window::window()
+Window::Window()
 {
     uint32_t s_ScreenWidth = 640;
     uint32_t s_ScreenHeight = 480;
 
-    window_handle = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
-    assert(window_handle);
+    window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
+    assert(window);
 
     SDL_ShowCursor(SDL_DISABLE);
 }
 
-window::~window()
+Window::~Window()
 {
-    SDL_DestroyWindow(window_handle);
+    SDL_DestroyWindow(window);
 }
 
 }
