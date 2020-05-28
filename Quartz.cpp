@@ -59,11 +59,11 @@ void Quartz::resonate()
                 {
                     if (c->m_fit == 1)
                     {
-                        c->m_fit_q();
+                        c->m_fit_quartz();
                         c->m_fit = 2;
                     }
 
-                    c->m_drive_q();
+                    c->m_drive_quartz();
                 }
             }
         }
@@ -93,11 +93,11 @@ void Quartz::tooth()
                 {
                     if (c->m_fit == 0)
                     {
-                        c->m_fit_t();
+                        c->m_fit_father();
                         c->m_fit = 1;
                     }
 
-                    c->m_drive_t();
+                    c->m_drive_father();
                 }
             }
         }

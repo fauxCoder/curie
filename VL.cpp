@@ -21,6 +21,8 @@ System::~System()
 }
 
 Window::Window()
+: window(nullptr)
+, renderer(nullptr)
 {
     uint32_t s_ScreenWidth = 640;
     uint32_t s_ScreenHeight = 480;
@@ -34,6 +36,61 @@ Window::Window()
 Window::~Window()
 {
     SDL_DestroyWindow(window);
+}
+
+void Window::init()
+{
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+}
+
+void Window::clear()
+{
+    SDL_SetRenderDrawColor(renderer, 0x22, 0x22, 0x22, 0xFF);
+    SDL_RenderClear(renderer);
+}
+
+void Window::copy(VL::Image& a_image, VL::Rect& a_rect)
+{
+    SDL_RenderCopy(renderer, (a_image.texture), nullptr, &a_rect._rect);
+}
+
+void Window::present()
+{
+    SDL_RenderPresent(renderer);
+}
+
+Image::Image(std::string file)
+: surface(nullptr)
+, texture(nullptr)
+, w(0)
+, h(0)
+{
+    surface = IMG_Load(file.c_str());
+    if (surface == nullptr)
+    {
+        printf("Unable to load image! SDL_image Error: %s\n", IMG_GetError());
+    }
+    else
+    {
+        w = surface->w;
+        h = surface->h;
+    }
+}
+
+Image::~Image()
+{
+    if (texture)
+    {
+        SDL_DestroyTexture(texture);
+    }
+}
+
+void Image::create_texture(Window& window)
+{
+    if (texture == nullptr)
+    {
+        texture = SDL_CreateTextureFromSurface(window.renderer, surface);
+    }
 }
 
 }

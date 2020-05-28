@@ -48,19 +48,19 @@ struct RM
     static uint32_t s_ScreenWidth;
     static uint32_t s_ScreenHeight;
 
-    RM(Quartz& a_Q, SDL_Window& a_Window);
+    RM(Quartz&, VL::Window&);
 
     ~RM();
 
-    void init_t();
+    void init_flip();
 
-    void init_q();
+    void flip();
 
-    void switch_t();
+    void init_draw();
 
-    void see_q();
+    void draw();
 
-    uint32_t AddImage(std::string a_Image);
+    uint32_t AddImage(std::string);
 
     VL::Image* GetImage(uint32_t a_Key);
 
@@ -68,13 +68,12 @@ struct RM
 
     void Remove(Entry a_Entry);
 
-    void Copy(uint32_t a_Key, SDL_Rect& a_Rect);
+    void Copy(uint32_t a_key, VL::Rect&);
 
-    void Copy(VL::Image* a_Image, SDL_Rect& a_Rect);
+    void Copy(VL::Image&, VL::Rect&);
 
     Quartz& m_Q;
-    SDL_Window& m_Window;
-    SDL_Renderer* m_renderer;
+    VL::Window& m_window;
 
     std::vector<std::unique_ptr<VL::Image>> m_Images;
 

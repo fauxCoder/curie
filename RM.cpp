@@ -4,16 +4,15 @@
 #include <cassert>
 #include <iostream>
 
-RM::RM(Quartz& a_Q, SDL_Window& a_Window)
+RM::RM(Quartz& a_Q, VL::Window& a_window)
 : m_Q(a_Q)
-, m_Window(a_Window)
-, m_renderer(nullptr)
+, m_window(a_window)
 , m_Redraw(false)
 , m_Cog(a_Q,
-    std::bind(&RM::init_t, this),
-    std::bind(&RM::init_q, this),
-    std::bind(&RM::switch_t, this),
-    std::bind(&RM::see_q, this))
+    std::bind(&RM::init_flip, this),
+    std::bind(&RM::flip, this),
+    std::bind(&RM::init_draw, this),
+    std::bind(&RM::draw, this))
 {
     m_Cog.m_engaged.store(true);
 }
@@ -64,53 +63,49 @@ void RM::Remove(Entry a_Entry)
     m_Redraw.store(true);
 }
 
-void RM::init_t()
+void RM::init_flip()
 {
 }
 
-void RM::init_q()
+void RM::flip()
 {
-    m_renderer = SDL_CreateRenderer(&m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
-    for (auto& image : m_Images)
-    {
-        if (image->texture == nullptr)
-        {
-            image->create_texture(m_renderer);
-        }
-    }
-}
-
-void RM::switch_t()
-{
-    bool switched = m_Redraw.load();
+    bool redraw = m_Redraw.load();
 
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
 
         for (auto& b : m_Entries)
         {
-            switched = b.m_CiCa->pivot() || switched;
+            redraw = b.m_CiCa->pivot() || redraw;
         }
     }
 
-    m_Redraw.store(switched);
+    m_Redraw.store(redraw);
 }
 
-void RM::see_q()
+void RM::init_draw()
 {
-    if ( ! m_Redraw.load())
+    m_window.init();
+
+    for (auto& image : m_Images)
+    {
+        image->create_texture(m_window);
+    }
+}
+
+void RM::draw()
+{
+    if (!m_Redraw.load())
         return;
 
     m_Redraw.store(false);
 
-    SDL_SetRenderDrawColor(m_renderer, 0x22, 0x22, 0x22, 0xFF);
-    SDL_RenderClear(m_renderer);
+    m_window.clear();
 
     {
         std::unique_lock<std::mutex> lk(m_Mutex);
 
-        SDL_Rect r;
+        VL::Rect r;
         CiCa::End* e;
         for (auto& b : m_Entries)
         {
@@ -126,21 +121,22 @@ void RM::see_q()
         }
     }
 
-    SDL_RenderPresent(m_renderer);
+    m_window.present();
 }
 
-void RM::Copy(uint32_t a_Key, SDL_Rect& a_Rect)
+void RM::Copy(uint32_t a_key, VL::Rect& a_rect)
 {
-    auto i = GetImage(a_Key);
+    auto i = GetImage(a_key);
     if (i)
     {
-        Copy(i, a_Rect);
+        Copy(*i, a_rect);
     }
 }
 
-void RM::Copy(VL::Image* a_Image, SDL_Rect& a_Rect)
+void RM::Copy(VL::Image& a_image, VL::Rect& a_rect)
 {
-    a_Rect.w *= a_Image->W;
-    a_Rect.h *= a_Image->H;
-    SDL_RenderCopy(m_renderer, (a_Image->texture), nullptr, &a_Rect);
+    a_rect.w *= a_image.w;
+    a_rect.h *= a_image.h;
+
+    m_window.copy(a_image, a_rect);
 }

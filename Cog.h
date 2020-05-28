@@ -18,10 +18,10 @@ struct Cog
 
     Quartz& m_Q;
 
-    std::function<void(void)> m_fit_t;
-    std::function<void(void)> m_fit_q;
-    std::function<void(void)> m_drive_t;
-    std::function<void(void)> m_drive_q;
+    std::function<void(void)> m_fit_father;
+    std::function<void(void)> m_drive_father;
+    std::function<void(void)> m_fit_quartz;
+    std::function<void(void)> m_drive_quartz;
 
     uint32_t m_fit;
     std::atomic<bool> m_engaged;
