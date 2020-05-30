@@ -6,14 +6,14 @@
 #include <cassert>
 #include <chrono>
 
-SB::working_t SB::as_working(output_t a_S)
+SB::working_t SB::as_working(SL::output_t a_S)
 {
-    return static_cast<working_t>(a_S) / static_cast<working_t>(std::numeric_limits<output_t>::max());
+    return static_cast<working_t>(a_S) / static_cast<working_t>(std::numeric_limits<SL::output_t>::max());
 }
 
-SB::output_t SB::as_output(working_t a_S)
+SL::output_t SB::as_output(working_t a_S)
 {
-    return static_cast<output_t>(a_S * static_cast<working_t>(std::numeric_limits<output_t>::max()));
+    return static_cast<SL::output_t>(a_S * static_cast<working_t>(std::numeric_limits<SL::output_t>::max()));
 }
 
 void SB::combine(working_t& o_A, working_t a_B)
@@ -38,7 +38,6 @@ void SB::combine(working_t& o_A, working_t a_B)
 SB::SB(Quartz& a_Q, uint32_t a_channels_out)
 : m_Q(a_Q)
 , m_channels_out(a_channels_out)
-, m_stream(nullptr)
 , m_Start(1)
 , m_Power(true)
 , m_Thread(&SB::Mix, this)
@@ -142,28 +141,13 @@ void SB::RemoveSource(uint8_t a_key)
 
 void SB::Mix()
 {
-    return;
-
-    auto error = Pa_Initialize();
-    assert(error == paNoError);
-
-    PaStreamParameters output;
-    output.device = Pa_GetDefaultOutputDevice();
-    output.channelCount = m_channels_out;
-    output.sampleFormat = paInt16;
-    output.suggestedLatency = Pa_GetDeviceInfo(output.device)->defaultLowOutputLatency;
-    output.hostApiSpecificStreamInfo = nullptr;
-    error = Pa_OpenStream(&m_stream, nullptr, &output, s_rate, s_chunk, paNoFlag, nullptr, nullptr);
-    assert(error == paNoError);
-
-    error = Pa_StartStream(m_stream);
-    assert(error == paNoError);
+    SL::Stream stream(s_rate, m_channels_out, s_chunk);
 
     std::vector<working_t> work_buffer;
-    work_buffer.resize(s_chunk * output.channelCount);
+    work_buffer.resize(s_chunk * stream.channels_out());
 
-    std::vector<output_t> out_buffer;
-    out_buffer.resize(s_chunk * output.channelCount);
+    std::vector<SL::output_t> out_buffer;
+    out_buffer.resize(s_chunk * stream.channels_out());
 
     while (m_Power.load())
     {
@@ -193,16 +177,16 @@ void SB::Mix()
             while (true)
             {
                 in_channel = channel < sound.channels ? channel : in_channel;
-                out_channel = channel < output.channelCount ? channel : out_channel;
+                out_channel = channel < stream.channels_out() ? channel : out_channel;
 
                 for (uint32_t i = 0; i < s_chunk; ++i)
                 {
-                    combine(work_buffer[i * output.channelCount + out_channel], chunk[in_channel][i] * it->scale);
+                    combine(work_buffer[i * stream.channels_out() + out_channel], chunk[in_channel][i] * it->scale);
                 }
 
                 ++channel;
 
-                if (channel >= sound.channels && channel >= output.channelCount)
+                if (channel >= sound.channels && channel >= stream.channels_out())
                     break;
             }
 
@@ -226,15 +210,7 @@ void SB::Mix()
             out_buffer[i] = as_output(work_buffer[i]);
         }
 
-        error = Pa_WriteStream(m_stream, out_buffer.data(), s_chunk);
+        stream.write(out_buffer.data(), s_chunk);
     }
 
-    error = Pa_StopStream(m_stream);
-    assert(error == paNoError);
-
-    error = Pa_CloseStream(m_stream);
-    assert(error == paNoError);
-
-    error = Pa_Terminate();
-    assert(error == paNoError);
 }

@@ -7,7 +7,7 @@
 RM::RM(Quartz& a_Q, VL::Window& a_window)
 : m_Q(a_Q)
 , m_window(a_window)
-, m_Redraw(false)
+, m_Redraw(true)
 , m_Cog(a_Q,
     std::bind(&RM::init_flip, this),
     std::bind(&RM::flip, this),

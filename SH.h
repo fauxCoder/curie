@@ -2,10 +2,11 @@
 
 #include <Curie/SB.h>
 
+#include <portaudio.h>
+
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-
 #include <iostream>
 
 struct Wave

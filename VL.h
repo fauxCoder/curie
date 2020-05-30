@@ -41,8 +41,8 @@ struct Window
 
     void present();
 
-    SDL_Window* window;
-    SDL_Renderer* renderer;
+    SDL_Window* _window;
+    SDL_Renderer* _renderer;
 };
 
 struct Image
@@ -53,8 +53,8 @@ struct Image
 
     void create_texture(Window&);
 
-    SDL_Surface* surface;
-    SDL_Texture* texture;
+    SDL_Surface* _surface;
+    SDL_Texture* _texture;
     int32_t w;
     int32_t h;
 };

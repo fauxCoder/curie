@@ -1,8 +1,7 @@
 #pragma once
 
 #include <Curie/Cog.h>
-
-#include <portaudio.h>
+#include <Curie/SL.h>
 
 #include <atomic>
 #include <deque>
@@ -18,13 +17,12 @@ struct Quartz;
 struct SB
 {
     typedef float working_t;
-    typedef int16_t output_t;
 
     static constexpr double s_rate = 44100.0;
     static const size_t s_chunk = 2048;
 
-    static working_t as_working(output_t);
-    static output_t as_output(working_t);
+    static working_t as_working(SL::output_t);
+    static SL::output_t as_output(working_t);
 
     static void combine(working_t&, working_t);
 
@@ -49,8 +47,6 @@ struct SB
     Quartz& m_Q;
 
     uint32_t m_channels_out;
-
-    PaStream* m_stream;
 
     struct Sound
     {

@@ -21,75 +21,75 @@ System::~System()
 }
 
 Window::Window()
-: window(nullptr)
-, renderer(nullptr)
+: _window(nullptr)
+, _renderer(nullptr)
 {
     uint32_t s_ScreenWidth = 640;
     uint32_t s_ScreenHeight = 480;
 
-    window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
-    assert(window);
+    _window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
+    assert(_window);
 
     SDL_ShowCursor(SDL_DISABLE);
 }
 
 Window::~Window()
 {
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(_window);
 }
 
 void Window::init()
 {
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 }
 
 void Window::clear()
 {
-    SDL_SetRenderDrawColor(renderer, 0x22, 0x22, 0x22, 0xFF);
-    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(_renderer, 0x22, 0x22, 0x22, 0xFF);
+    SDL_RenderClear(_renderer);
 }
 
 void Window::copy(VL::Image& a_image, VL::Rect& a_rect)
 {
-    SDL_RenderCopy(renderer, (a_image.texture), nullptr, &a_rect._rect);
+    SDL_RenderCopy(_renderer, (a_image._texture), nullptr, &a_rect._rect);
 }
 
 void Window::present()
 {
-    SDL_RenderPresent(renderer);
+    SDL_RenderPresent(_renderer);
 }
 
 Image::Image(std::string file)
-: surface(nullptr)
-, texture(nullptr)
+: _surface(nullptr)
+, _texture(nullptr)
 , w(0)
 , h(0)
 {
-    surface = IMG_Load(file.c_str());
-    if (surface == nullptr)
+    _surface = IMG_Load(file.c_str());
+    if (_surface == nullptr)
     {
         printf("Unable to load image! SDL_image Error: %s\n", IMG_GetError());
     }
     else
     {
-        w = surface->w;
-        h = surface->h;
+        w = _surface->w;
+        h = _surface->h;
     }
 }
 
 Image::~Image()
 {
-    if (texture)
+    if (_texture)
     {
-        SDL_DestroyTexture(texture);
+        SDL_DestroyTexture(_texture);
     }
 }
 
-void Image::create_texture(Window& window)
+void Image::create_texture(Window& a_window)
 {
-    if (texture == nullptr)
+    if (_texture == nullptr)
     {
-        texture = SDL_CreateTextureFromSurface(window.renderer, surface);
+        _texture = SDL_CreateTextureFromSurface(a_window._renderer, _surface);
     }
 }
 
