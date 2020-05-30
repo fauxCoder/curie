@@ -1,34 +1,42 @@
 #include <Curie/SL.h>
 
+#include <portaudio.h>
+
 #include <cassert>
 
 namespace SL
 {
 
+struct Stream::impl
+{
+    PaStreamParameters output;
+    PaStream* stream = nullptr;
+};
+
 Stream::Stream(double a_rate, uint32_t a_channels, std::size_t a_chunk)
-: _stream(nullptr)
+: pimpl(std::make_unique<impl>())
 {
     auto error = Pa_Initialize();
     assert(error == paNoError);
 
-    _output.device = Pa_GetDefaultOutputDevice();
-    _output.channelCount = a_channels;
-    _output.sampleFormat = paInt16;
-    _output.suggestedLatency = Pa_GetDeviceInfo(_output.device)->defaultLowOutputLatency;
-    _output.hostApiSpecificStreamInfo = nullptr;
-    error = Pa_OpenStream(&_stream, nullptr, &_output, a_rate, a_chunk, paNoFlag, nullptr, nullptr);
+    pimpl->output.device = Pa_GetDefaultOutputDevice();
+    pimpl->output.channelCount = a_channels;
+    pimpl->output.sampleFormat = paInt16;
+    pimpl->output.suggestedLatency = Pa_GetDeviceInfo(pimpl->output.device)->defaultLowOutputLatency;
+    pimpl->output.hostApiSpecificStreamInfo = nullptr;
+    error = Pa_OpenStream(&pimpl->stream, nullptr, &pimpl->output, a_rate, a_chunk, paNoFlag, nullptr, nullptr);
     assert(error == paNoError);
 
-    error = Pa_StartStream(_stream);
+    error = Pa_StartStream(pimpl->stream);
     assert(error == paNoError);
 }
 
 Stream::~Stream()
 {
-    auto error = Pa_StopStream(_stream);
+    auto error = Pa_StopStream(pimpl->stream);
     assert(error == paNoError);
 
-    error = Pa_CloseStream(_stream);
+    error = Pa_CloseStream(pimpl->stream);
     assert(error == paNoError);
 
     error = Pa_Terminate();
@@ -37,13 +45,13 @@ Stream::~Stream()
 
 void Stream::write(output_t* a_data, std::size_t a_size)
 {
-    auto error = Pa_WriteStream(_stream, a_data, a_size);
+    auto error = Pa_WriteStream(pimpl->stream, a_data, a_size);
     assert(error == paNoError);
 }
 
 uint32_t Stream::channels_out()
 {
-    return _output.channelCount;
+    return pimpl->output.channelCount;
 }
 
 }

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <portaudio.h>
-
 #include <cstdint>
+#include <memory>
 
 namespace SL
 {
@@ -18,8 +17,8 @@ struct Stream
 
     uint32_t channels_out();
 
-    PaStreamParameters _output;
-    PaStream* _stream;
+    struct impl;
+    std::unique_ptr<impl> pimpl;
 };
 
 }
