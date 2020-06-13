@@ -1,14 +1,17 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include <Curie/EL.h>
 
 #include <functional>
 #include <map>
 #include <set>
 
+namespace Curie
+{
+
 struct Catch
 {
-    Catch(std::set<SDL_Keycode> a_codes, void* a_p = nullptr)
+    Catch(std::set<EL::Event> a_codes, void* a_p = nullptr)
     : p (a_p)
     , codes(a_codes)
     {
@@ -27,7 +30,7 @@ struct Catch
     }
 
     void* p;
-    std::set<SDL_Keycode> codes;
+    std::set<EL::Event> codes;
 };
 
 struct Input
@@ -44,6 +47,8 @@ struct Input
 
     void open(std::function<void(void)> a_DefaultResponse);
 
-    std::map<Catch, std::function<bool(SDL_Keycode)>> m_KeyDownResponses;
-    std::map<Catch, std::function<bool(SDL_Keycode)>> m_KeyUpResponses;
+    std::map<Catch, std::function<bool(EL::Event)>> m_KeyDownResponses;
+    std::map<Catch, std::function<bool(EL::Event)>> m_KeyUpResponses;
 };
+
+}

@@ -1,24 +1,26 @@
 #include <Curie/Input.h>
 
+namespace Curie
+{
+
 void Input::open(std::function<void(void)> a_DefaultResponse)
 {
-    SDL_PumpEvents();
-    SDL_FlushEvent(SDL_KEYUP);
-    SDL_FlushEvent(SDL_KEYDOWN);
+    EL::prime();
 
     bool done = false;
     while ( ! done)
     {
-        SDL_Event e;
-        while (SDL_PollEvent(&e) != 0)
+        EL::Event e = EL::None;
+        EL::Type type = EL::KeyDown;
+        while (EL::poll(e, type))
         {
-            if (e.type == SDL_KEYUP)
+            if (type == EL::KeyUp)
             {
                 for (auto& kdr : m_KeyUpResponses)
                 {
                     for (auto k : kdr.first.codes)
                     {
-                        if (k == e.key.keysym.sym)
+                        if (k == e)
                         {
                             done = kdr.second(k);
                             break;
@@ -26,13 +28,13 @@ void Input::open(std::function<void(void)> a_DefaultResponse)
                     }
                 }
             }
-            else if (e.type == SDL_KEYDOWN)
+            else if (type == EL::KeyDown)
             {
                 for (auto& kdr : m_KeyDownResponses)
                 {
                     for (auto k : kdr.first.codes)
                     {
-                        if (k == e.key.keysym.sym)
+                        if (k == e)
                         {
                             done = kdr.second(k);
                             break;
@@ -44,4 +46,6 @@ void Input::open(std::function<void(void)> a_DefaultResponse)
 
         a_DefaultResponse();
     }
+}
+
 }
