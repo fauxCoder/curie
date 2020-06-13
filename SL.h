@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <memory>
 
+namespace Curie
+{
 namespace SL
 {
 
@@ -21,4 +23,5 @@ struct Stream
     std::unique_ptr<impl> pimpl;
 };
 
+}
 }

@@ -2,12 +2,15 @@
 
 #include <Curie/SB.h>
 
-#include <portaudio.h>
-
 #include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+
+namespace Curie
+{
+namespace Snd
+{
 
 struct Wave
 {
@@ -134,3 +137,6 @@ struct SH
         return data;
     }
 };
+
+}
+}

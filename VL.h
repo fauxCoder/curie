@@ -5,6 +5,8 @@
 
 #include <string>
 
+namespace Curie
+{
 namespace VL
 {
 
@@ -59,4 +61,5 @@ struct Image
     int32_t h;
 };
 
+}
 }

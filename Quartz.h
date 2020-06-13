@@ -7,6 +7,9 @@
 #include <thread>
 #include <set>
 
+namespace Curie
+{
+
 struct Cog;
 
 struct Quartz
@@ -41,3 +44,5 @@ private:
 
     std::thread m_thread;
 };
+
+}

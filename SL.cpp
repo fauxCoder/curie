@@ -4,6 +4,8 @@
 
 #include <cassert>
 
+namespace Curie
+{
 namespace SL
 {
 
@@ -54,4 +56,5 @@ uint32_t Stream::channels_out()
     return pimpl->output.channelCount;
 }
 
+}
 }

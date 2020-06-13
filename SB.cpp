@@ -6,7 +6,12 @@
 #include <cassert>
 #include <chrono>
 
-SB::working_t SB::as_working(SL::output_t a_S)
+namespace Curie
+{
+namespace Snd
+{
+
+working_t SB::as_working(SL::output_t a_S)
 {
     return static_cast<working_t>(a_S) / static_cast<working_t>(std::numeric_limits<SL::output_t>::max());
 }
@@ -56,14 +61,14 @@ uint32_t SB::SForF(double a_Frames)
     return a_Frames * (s_rate / (double)m_Q.m_FPS);
 }
 
-uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&)> a_func)
+std::shared_ptr<Sound> SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&)> a_func)
 {
-    auto& sound = m_Sounds.emplace_back(1);
+    auto sound = std::make_shared<Sound>(1);
 
     uint32_t so_far = 0;
     while (so_far < a_samples)
     {
-        auto& data = sound.extend(s_chunk);
+        auto& data = sound->extend(s_chunk);
 
         for (uint32_t t = 0; t < s_chunk; ++t)
         {
@@ -75,17 +80,17 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
         }
     }
 
-    return m_Sounds.size() - 1;
+    return sound;
 }
 
-uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&, working_t&)> a_func)
+std::shared_ptr<Sound> SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32_t, working_t&, working_t&)> a_func)
 {
-    auto& sound = m_Sounds.emplace_back(2);
+    auto sound = std::make_shared<Sound>(2);
 
     uint32_t so_far = 0;
     while (so_far < a_samples)
     {
-        auto& data = sound.extend(s_chunk);
+        auto& data = sound->extend(s_chunk);
 
         for (uint32_t t = 0; t < s_chunk; ++t)
         {
@@ -97,17 +102,17 @@ uint32_t SB::CreateSound(uint32_t a_samples, std::function<void(uint32_t, uint32
         }
     }
 
-    return m_Sounds.size() - 1;
+    return sound;
 }
 
-void SB::PlaySound(uint32_t a_key)
+void SB::PlaySound(std::shared_ptr<Sound>& a_sound)
 {
     std::unique_lock<std::mutex> lk(m_queue_mutex);
 
-    m_queue.insert(a_key);
+    m_queue.insert(a_sound);
 }
 
-uint8_t SB::AddSource(std::function<void(working_t*, size_t)> a_func)
+uint32_t SB::AddSource(std::function<void(working_t*, size_t)> a_func)
 {
     if (! m_Available.empty())
     {
@@ -129,7 +134,7 @@ uint8_t SB::AddSource(std::function<void(working_t*, size_t)> a_func)
     }
 }
 
-void SB::RemoveSource(uint8_t a_key)
+void SB::RemoveSource(uint32_t a_key)
 {
     if (a_key != 0)
     {
@@ -168,15 +173,15 @@ void SB::Mix()
         auto it = m_playing.begin();
         while (it != m_playing.end())
         {
-            const auto& sound = m_Sounds[it->key];
-            const auto& chunk = sound.data[it->progress++];
+            const auto& sound = it->sound;
+            const auto& chunk = sound->data[it->progress++];
 
             uint32_t channel = 0;
             uint32_t in_channel = 0;
             uint32_t out_channel = 0;
             while (true)
             {
-                in_channel = channel < sound.channels ? channel : in_channel;
+                in_channel = channel < sound->channels ? channel : in_channel;
                 out_channel = channel < stream.channels_out() ? channel : out_channel;
 
                 for (uint32_t i = 0; i < s_chunk; ++i)
@@ -186,11 +191,11 @@ void SB::Mix()
 
                 ++channel;
 
-                if (channel >= sound.channels && channel >= stream.channels_out())
+                if (channel >= sound->channels && channel >= stream.channels_out())
                     break;
             }
 
-            if (it->progress == sound.data.size())
+            if (it->progress == sound->data.size())
             {
                 it = m_playing.erase(it);
             }
@@ -212,5 +217,7 @@ void SB::Mix()
 
         stream.write(out_buffer.data(), s_chunk);
     }
+}
 
+}
 }

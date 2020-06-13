@@ -1,6 +1,9 @@
 #include <Curie/Cog.h>
 #include <Curie/Quartz.h>
 
+namespace Curie
+{
+
 Cog::Cog(Quartz& a_Q,
     std::function<void(void)> a_fit_father,
     std::function<void(void)> a_drive_father,
@@ -22,4 +25,6 @@ Cog::~Cog()
 {
     std::unique_lock<std::mutex> lk(m_Q.m_cogs_mutex);
     m_Q.m_cogs.erase(this);
+}
+
 }

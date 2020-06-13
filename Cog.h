@@ -4,6 +4,9 @@
 #include <functional>
 #include <mutex>
 
+namespace Curie
+{
+
 struct Quartz;
 
 struct Cog
@@ -26,3 +29,5 @@ struct Cog
     uint32_t m_fit;
     std::atomic<bool> m_engaged;
 };
+
+}

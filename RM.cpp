@@ -4,6 +4,11 @@
 #include <cassert>
 #include <iostream>
 
+namespace Curie
+{
+namespace Vis
+{
+
 RM::RM(Quartz& a_Q, VL::Window& a_window)
 : m_Q(a_Q)
 , m_window(a_window)
@@ -40,7 +45,7 @@ VL::Image* RM::GetImage(uint32_t a_Key)
     }
 }
 
-RM::Entry RM::Add(int64_t a_Priority)
+Entry RM::Add(int64_t a_Priority)
 {
     std::unique_lock<std::mutex> lk(m_Mutex);
 
@@ -139,4 +144,7 @@ void RM::Copy(VL::Image& a_image, VL::Rect& a_rect)
     a_rect.h *= a_image.h;
 
     m_window.copy(a_image, a_rect);
+}
+
+}
 }

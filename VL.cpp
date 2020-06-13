@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+namespace Curie
+{
 namespace VL
 {
 
@@ -93,4 +95,5 @@ void Image::create_texture(Window& a_window)
     }
 }
 
+}
 }

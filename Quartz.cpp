@@ -3,6 +3,9 @@
 
 using namespace std::chrono;
 
+namespace Curie
+{
+
 Quartz::Quartz(uint32_t a_FPS)
 : m_FPS(a_FPS)
 , m_FrameLength(1000 / a_FPS)
@@ -115,4 +118,6 @@ void Quartz::teeth(uint32_t a_Moves)
         tooth();
         --a_Moves;
     }
+}
+
 }
