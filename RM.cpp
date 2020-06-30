@@ -94,7 +94,7 @@ void RM::init_draw()
 
     for (auto& image : m_Images)
     {
-        image->create_texture(m_window);
+        image->init(m_window);
     }
 }
 
@@ -140,8 +140,8 @@ void RM::Copy(uint32_t a_key, VL::Rect& a_rect)
 
 void RM::Copy(VL::Image& a_image, VL::Rect& a_rect)
 {
-    a_rect.w *= a_image.w;
-    a_rect.h *= a_image.h;
+    a_rect.w *= a_image.get_width();
+    a_rect.h *= a_image.get_height();
 
     m_window.copy(a_image, a_rect);
 }

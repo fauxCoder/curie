@@ -1,9 +1,7 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-
 #include <string>
+#include <memory>
 
 namespace Curie
 {
@@ -22,7 +20,7 @@ struct Rect
 {
     union
     {
-        SDL_Rect _rect;
+        int rect[4];
         struct
         {
             int x, y, w, h;
@@ -43,8 +41,8 @@ struct Window
 
     void present();
 
-    SDL_Window* _window;
-    SDL_Renderer* _renderer;
+    struct impl;
+    std::unique_ptr<impl> pimpl;
 };
 
 struct Image
@@ -53,12 +51,14 @@ struct Image
 
     ~Image();
 
-    void create_texture(Window&);
+    void init(Window&);
 
-    SDL_Surface* _surface;
-    SDL_Texture* _texture;
-    int32_t w;
-    int32_t h;
+    int32_t get_width();
+
+    int32_t get_height();
+
+    struct impl;
+    std::unique_ptr<impl> pimpl;
 };
 
 }

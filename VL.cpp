@@ -1,11 +1,28 @@
 #include <Curie/VL.h>
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+
 #include <cassert>
 
 namespace Curie
 {
 namespace VL
 {
+
+struct Window::impl
+{
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
+};
+
+struct Image::impl
+{
+    SDL_Surface* surface = nullptr;
+    SDL_Texture* texture = nullptr;
+    int32_t w = 0;
+    int32_t h = 0;
+};
 
 System::System()
 {
@@ -23,76 +40,83 @@ System::~System()
 }
 
 Window::Window()
-: _window(nullptr)
-, _renderer(nullptr)
+: pimpl(std::make_unique<impl>())
 {
     uint32_t s_ScreenWidth = 640;
     uint32_t s_ScreenHeight = 480;
 
-    _window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
-    assert(_window);
+    pimpl->window = SDL_CreateWindow("Curie", 0, 0, s_ScreenWidth, s_ScreenHeight, SDL_WINDOW_SHOWN);
+    assert(pimpl->window);
 
     SDL_ShowCursor(SDL_DISABLE);
 }
 
 Window::~Window()
 {
-    SDL_DestroyWindow(_window);
+    SDL_DestroyWindow(pimpl->window);
 }
 
 void Window::init()
 {
-    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    pimpl->renderer = SDL_CreateRenderer(pimpl->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 }
 
 void Window::clear()
 {
-    SDL_SetRenderDrawColor(_renderer, 0x22, 0x22, 0x22, 0xFF);
-    SDL_RenderClear(_renderer);
+    SDL_SetRenderDrawColor(pimpl->renderer, 0x22, 0x22, 0x22, 0xff);
+    SDL_RenderClear(pimpl->renderer);
 }
 
 void Window::copy(VL::Image& a_image, VL::Rect& a_rect)
 {
-    SDL_RenderCopy(_renderer, (a_image._texture), nullptr, &a_rect._rect);
+    SDL_Rect* r = reinterpret_cast<SDL_Rect*>(a_rect.rect);
+    SDL_RenderCopy(pimpl->renderer, (a_image.pimpl->texture), nullptr, r);
 }
 
 void Window::present()
 {
-    SDL_RenderPresent(_renderer);
+    SDL_RenderPresent(pimpl->renderer);
 }
 
 Image::Image(std::string file)
-: _surface(nullptr)
-, _texture(nullptr)
-, w(0)
-, h(0)
+: pimpl(std::make_unique<impl>())
 {
-    _surface = IMG_Load(file.c_str());
-    if (_surface == nullptr)
+    pimpl->surface = IMG_Load(file.c_str());
+    if (pimpl->surface == nullptr)
     {
         printf("Unable to load image! SDL_image Error: %s\n", IMG_GetError());
     }
     else
     {
-        w = _surface->w;
-        h = _surface->h;
+        pimpl->w = pimpl->surface->w;
+        pimpl->h = pimpl->surface->h;
     }
 }
 
 Image::~Image()
 {
-    if (_texture)
+    if (pimpl->texture)
     {
-        SDL_DestroyTexture(_texture);
+        SDL_DestroyTexture(pimpl->texture);
     }
 }
 
-void Image::create_texture(Window& a_window)
+void Image::init(Window& a_window)
 {
-    if (_texture == nullptr)
+    if (pimpl->texture == nullptr)
     {
-        _texture = SDL_CreateTextureFromSurface(a_window._renderer, _surface);
+        pimpl->texture = SDL_CreateTextureFromSurface(a_window.pimpl->renderer, pimpl->surface);
     }
+}
+
+int32_t Image::get_width()
+{
+    return pimpl->w;
+}
+
+int32_t Image::get_height()
+{
+    return pimpl->h;
 }
 
 }
