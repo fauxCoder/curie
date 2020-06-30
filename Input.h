@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Curie/EL.h>
+#include <Curie/IL.h>
 
 #include <functional>
 #include <map>
@@ -11,7 +11,7 @@ namespace Curie
 
 struct Catch
 {
-    Catch(std::set<EL::Event> a_codes, void* a_p = nullptr)
+    Catch(std::set<IL::Input> a_codes, void* a_p = nullptr)
     : p (a_p)
     , codes(a_codes)
     {
@@ -30,7 +30,7 @@ struct Catch
     }
 
     void* p;
-    std::set<EL::Event> codes;
+    std::set<IL::Input> codes;
 };
 
 struct Input
@@ -47,8 +47,8 @@ struct Input
 
     void open(std::function<void(void)> a_DefaultResponse);
 
-    std::map<Catch, std::function<bool(EL::Event)>> m_KeyDownResponses;
-    std::map<Catch, std::function<bool(EL::Event)>> m_KeyUpResponses;
+    std::map<Catch, std::function<bool(IL::Input)>> m_KeyDownResponses;
+    std::map<Catch, std::function<bool(IL::Input)>> m_KeyUpResponses;
 };
 
 }

@@ -1,4 +1,4 @@
-#include <Curie/EL.h>
+#include <Curie/IL.h>
 
 #include <SDL2/SDL.h>
 
@@ -7,25 +7,25 @@
 
 namespace Curie
 {
-namespace EL
+namespace IL
 {
 
-using SysEvent = SDL_Keycode;
+using SysInput = SDL_Keycode;
 
-static const SysEvent nothing = 0;
+static const SysInput nothing = 0;
 
-struct EventPair
+struct InputPair
 {
-    Event curie;
-    SysEvent sys;
+    Input curie;
+    SysInput sys;
 
-    EventPair(Event a_curie, SysEvent a_sys)
+    InputPair(Input a_curie, SysInput a_sys)
     : curie(a_curie), sys(a_sys)
     {
     }
 };
 
-static const std::vector<EventPair> mapping = {
+static const std::vector<InputPair> mapping = {
     { Key_1,        SDLK_1      },
     { Key_2,        SDLK_2      },
     { Key_3,        SDLK_3      },
@@ -35,28 +35,28 @@ static const std::vector<EventPair> mapping = {
     { Key_Escape,   SDLK_ESCAPE },
 };
 
-SysEvent map(Event event)
+SysInput map(Input input)
 {
-    if (event >= 0 && event < Total && mapping[event].curie == event)
+    if (input >= 0 && input < Total && mapping[input].curie == input)
     {
-        return mapping[event].sys;
+        return mapping[input].sys;
     }
 
     return nothing;
 }
 
-Event reverse(SysEvent sys_event)
+Input reverse(SysInput sys_input)
 {
-    static std::vector<EventPair> reverse_mapping;
+    static std::vector<InputPair> reverse_mapping;
     static uint32_t offset = 0;
 
     if (reverse_mapping.empty())
     {
-        std::map<SysEvent, Event> progress;
+        std::map<SysInput, Input> progress;
 
         for (uint32_t e = 0; e < Total; ++e)
         {
-            progress[map(static_cast<Event>(e))] = static_cast<Event>(e);
+            progress[map(static_cast<Input>(e))] = static_cast<Input>(e);
         }
 
         offset = progress.begin()->first;
@@ -78,8 +78,8 @@ Event reverse(SysEvent sys_event)
         }
     }
 
-    uint32_t index = sys_event - offset;
-    if (index < reverse_mapping.size() && reverse_mapping[index].sys == sys_event)
+    uint32_t index = sys_input - offset;
+    if (index < reverse_mapping.size() && reverse_mapping[index].sys == sys_input)
     {
         return reverse_mapping[index].curie;
     }
@@ -94,14 +94,14 @@ void prime()
     SDL_FlushEvent(SDL_KEYDOWN);
 }
 
-bool poll(Event& o_event, Type& o_type)
+bool poll(Input& o_input, Type& o_type)
 {
     SDL_Event e;
     bool ret = SDL_PollEvent(&e) != 0;
 
     if (ret)
     {
-        o_event = reverse(e.key.keysym.sym);
+        o_input = reverse(e.key.keysym.sym);
 
         if (e.type == SDL_KEYDOWN)
             o_type = KeyDown;

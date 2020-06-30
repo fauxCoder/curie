@@ -5,10 +5,10 @@
 
 namespace Curie
 {
-namespace EL
+namespace IL
 {
 
-enum Event
+enum Input
 {
     None = -1,
     Key_1 = 0,
@@ -29,7 +29,7 @@ enum Type
 
 void prime();
 
-bool poll(Event&, Type&);
+bool poll(Input&, Type&);
 
 }
 }

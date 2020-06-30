@@ -5,16 +5,16 @@ namespace Curie
 
 void Input::open(std::function<void(void)> a_DefaultResponse)
 {
-    EL::prime();
+    IL::prime();
 
     bool done = false;
     while ( ! done)
     {
-        EL::Event e = EL::None;
-        EL::Type type = EL::KeyDown;
-        while (EL::poll(e, type))
+        IL::Input e = IL::None;
+        IL::Type type = IL::KeyDown;
+        while (IL::poll(e, type))
         {
-            if (type == EL::KeyUp)
+            if (type == IL::KeyUp)
             {
                 for (auto& kdr : m_KeyUpResponses)
                 {
@@ -28,7 +28,7 @@ void Input::open(std::function<void(void)> a_DefaultResponse)
                     }
                 }
             }
-            else if (type == EL::KeyDown)
+            else if (type == IL::KeyDown)
             {
                 for (auto& kdr : m_KeyDownResponses)
                 {
