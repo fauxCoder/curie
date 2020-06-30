@@ -47,7 +47,7 @@ Stream::~Stream()
 
 void Stream::write(output_t* a_data, std::size_t a_size)
 {
-    auto error = Pa_WriteStream(pimpl->stream, a_data, a_size);
+    [[maybe_unused]] auto error = Pa_WriteStream(pimpl->stream, a_data, a_size);
     assert(error == paNoError);
 }
 

@@ -3,3 +3,5 @@ INCLUDE_FLAGS = -I..
 
 : foreach *.cpp |> !cxx |>
 : *.o |> !ar |> libcurie.a
+
+.gitignore
