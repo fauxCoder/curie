@@ -33,7 +33,7 @@ struct Catch
     std::set<IL::Input> codes;
 };
 
-struct Input
+struct Cam
 {
     template<typename T>
     void link(T& a_t)

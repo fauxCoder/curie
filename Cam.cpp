@@ -1,9 +1,9 @@
-#include <Curie/Input.h>
+#include <Curie/Cam.h>
 
 namespace Curie
 {
 
-void Input::open(std::function<void(void)> a_DefaultResponse)
+void Cam::open(std::function<void(void)> a_DefaultResponse)
 {
     IL::prime();
 
