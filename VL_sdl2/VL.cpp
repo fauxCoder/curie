@@ -26,7 +26,7 @@ struct Image::impl
 
 System::System()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
     {
         printf("SDL_Error: %s\n", SDL_GetError());
     }
@@ -36,7 +36,7 @@ System::System()
 
 System::~System()
 {
-    SDL_Quit();
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 Window::Window()

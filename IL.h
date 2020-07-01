@@ -8,6 +8,12 @@ namespace Curie
 namespace IL
 {
 
+struct System
+{
+    System();
+    ~System();
+};
+
 enum Input
 {
     None = -1,

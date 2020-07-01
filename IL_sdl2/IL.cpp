@@ -10,6 +10,20 @@ namespace Curie
 namespace IL
 {
 
+System::System()
+{
+    if (SDL_InitSubSystem(SDL_INIT_EVENTS) < 0)
+    {
+        printf("SDL_Error: %s\n", SDL_GetError());
+    }
+}
+
+System::~System()
+{
+    SDL_QuitSubSystem(SDL_INIT_EVENTS);
+    SDL_Quit();
+}
+
 using SysInput = SDL_Keycode;
 
 static const SysInput nothing = 0;
