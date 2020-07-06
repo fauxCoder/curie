@@ -148,6 +148,9 @@ void SB::Mix()
 {
     SL::Stream stream(s_rate, m_channels_out, s_chunk);
 
+    if (stream.channels_out() == 0)
+        return;
+
     std::vector<working_t> work_buffer;
     work_buffer.resize(s_chunk * stream.channels_out());
 
