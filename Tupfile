@@ -1,12 +1,12 @@
 include_rules
 INCLUDE_FLAGS = -I..
 
-: foreach *.cpp |> !cxx |>
+: foreach *.cpp |> !compile |>
 
-: foreach IL_@(INPUT_LAYER)/*.cpp |> !cxx |>
-: foreach SL_@(SOUND_LAYER)/*.cpp |> !cxx |>
-: foreach VL_@(VIDEO_LAYER)/*.cpp |> !cxx |>
+: foreach IL_@(INPUT_LAYER)/*.cpp |> !compile |>
+: foreach SL_@(SOUND_LAYER)/*.cpp |> !compile |>
+: foreach VL_@(VIDEO_LAYER)/*.cpp |> !compile |>
 
-: *.o |> !ar |> libcurie.a
+: *.o |> !archive |> libcurie.a
 
 .gitignore
