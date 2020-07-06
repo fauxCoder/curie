@@ -1,5 +1,7 @@
 #include <Curie/VL.h>
 
+#include <curses.h>
+
 #include <cassert>
 
 namespace Curie
@@ -42,24 +44,21 @@ Window::~Window()
 
 void Window::init()
 {
-    //pimpl->renderer = SDL_CreateRenderer(pimpl->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    ::clear();
 }
 
 void Window::clear()
 {
-    //SDL_SetRenderDrawColor(pimpl->renderer, 0x22, 0x22, 0x22, 0xff);
-    //SDL_RenderClear(pimpl->renderer);
 }
 
 void Window::copy(VL::Image& a_image, VL::Rect& a_rect)
 {
-    //SDL_Rect* r = reinterpret_cast<SDL_Rect*>(a_rect.rect);
-    //SDL_RenderCopy(pimpl->renderer, (a_image.pimpl->texture), nullptr, r);
+    // mvaddch(5, 5, '*');
 }
 
 void Window::present()
 {
-    //SDL_RenderPresent(pimpl->renderer);
+    refresh();
 }
 
 Image::Image(std::string file)
