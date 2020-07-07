@@ -38,6 +38,7 @@ void prime()
 {
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
+    flushinp();
 }
 
 bool poll(Input& o_input, Type& o_type)
@@ -49,14 +50,14 @@ bool poll(Input& o_input, Type& o_type)
         auto found = mapping.find(ch);
         if (found != mapping.end())
         {
+            flushinp();
+
             o_input = found->second;
             o_type = KeyDown;
-            flushinp();
             return true;
         }
     }
 
-    flushinp();
     return false;
 }
 
